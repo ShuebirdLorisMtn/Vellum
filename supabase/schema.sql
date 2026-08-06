@@ -243,3 +243,28 @@ begin
   return jsonb_build_object('ok', true, 'docs_generated', v_docs);
 end;
 $$;
+
+-- ============================================================
+-- ROLE PRIVILEGES
+-- RLS policies decide *which rows* a role may touch, but Postgres
+-- still requires a table-level GRANT before RLS is evaluated at
+-- all — otherwise every request 42501s with "permission denied"
+-- regardless of policy. Supabase's Table Editor does this
+-- automatically for tables created there; these were created via
+-- the SQL editor, so it's explicit here.
+-- ============================================================
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select on public.profiles to authenticated;
+grant select, update on public.documents to authenticated;
+grant select on public.documents to anon;              -- gated by the "read shared" RLS policy
+grant select on public.feedback to authenticated;
+grant select, insert on public.events to authenticated;
+grant insert on public.events to anon;                  -- gated by the "anon share views" RLS policy
+grant select on public.tone_preferences to authenticated;
+grant select on public.gene_weights to anon, authenticated;
+grant execute on function public.record_feedback(uuid, text, text, text[]) to authenticated;
+
+grant all privileges on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
+grant execute on all functions in schema public to service_role;
