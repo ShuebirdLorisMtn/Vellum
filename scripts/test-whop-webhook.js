@@ -2,7 +2,7 @@
 // scripts/test-whop-webhook.js
 // Small helper to POST a signed test payload to your /webhooks/whop endpoint.
 
-const fetch = require('node-fetch');
+// Uses the global fetch built into Node 18+.
 const crypto = require('crypto');
 
 const webhookUrl = process.env.WEBHOOK_URL || 'http://localhost:3000/webhooks/whop';

@@ -1,7 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
 const path = require('path');
 const sgMail = require('@sendgrid/mail');
 
@@ -29,7 +28,7 @@ app.use(express.json({
 
 const PORT = process.env.PORT || 3000;
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
-const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-2.1';
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-opus-5';
 const WHOP_WEBHOOK_SECRET = process.env.WHOP_WEBHOOK_SECRET || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_in_production';
 const WHOP_PRODUCT_URL = process.env.WHOP_PRODUCT_URL || '';
@@ -128,20 +127,19 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
     const user = await db.getUserById(req.user.userId);
     if (!user) return res.status(404).json({ error: 'user not found' });
 
-    if (user.free_docs_remaining > 0) {
-      // consume free doc
-      await db.decrementFreeDoc(user.id);
-    } else if (!user.subscription_active) {
+    const usingFreeDoc = user.free_docs_remaining > 0;
+    if (!usingFreeDoc && !user.subscription_active) {
       // require purchase
       return res.status(402).json({ error: 'payment_required', purchase_url: WHOP_PRODUCT_URL || 'https://your-whop-product-url' });
     }
 
     // call Claude
     const system = `You are Vellum — a document architect. Produce a concise document based on the user's prompt.`;
-    const fullPrompt = `${system}\nUSER PROMPT:\n${prompt}`;
-    const output = await generateFromClaude(CLAUDE_API_KEY, CLAUDE_MODEL, fullPrompt, 1500);
+    const output = await generateFromClaude(CLAUDE_API_KEY, CLAUDE_MODEL, prompt, 1500, system);
 
     const doc = await db.saveDocument(user.id, title || null, output);
+    // consume the free doc only after a successful generation
+    if (usingFreeDoc) await db.decrementFreeDoc(user.id);
     res.json({ document: doc });
   } catch (err) {
     console.error('generate error', err);
