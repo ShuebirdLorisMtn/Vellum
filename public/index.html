@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vellum — Fuck Your Cookie Cutter Template.</title>
-    <meta name="description" content="Vellum is the world's first Cognitive Document Architect. Three questions. Perfect document. From custom hellraisers to polite praisers — we architect the document your situation demands. First one's free.">
+    <title>Vellum — F*** Your Cookie Cutter Template.</title>
+    <meta name="description" content="Vellum is the world's first self-learning Cognitive Document Architect. Three questions. Perfect document. From custom hellraisers to polite praisers. First one's free.">
     <style>
         :root {
             --bg: #07070a;
@@ -18,10 +18,12 @@
             --accent: #c9a96e;
             --accent-fire: #e85d3a;
             --accent-ice: #7eb8da;
+            --accent-success: #4caf91;
             --accent-glow: rgba(201, 169, 110, 0.3);
-            --accent-fire-glow: rgba(232, 93, 58, 0.25);
-            --radius: 12px;
-            --radius-lg: 20px;
+            --accent-fire-glow: rgba(232, 93, 58, 0.3);
+            --radius: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -30,11 +32,9 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         html {
             scroll-behavior: smooth;
         }
-
         body {
             font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--bg);
@@ -44,7 +44,7 @@
             overflow-x: hidden;
         }
 
-        /* Aggressive ambient — fire and ice */
+        /* Ambient background */
         body::before {
             content: '';
             position: fixed;
@@ -73,38 +73,29 @@
             }
         }
 
-        .page-content {
+        .app-container {
             position: relative;
             z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── NAV ── */
         .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 1rem 2rem;
-            background: rgba(7, 7, 10, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid transparent;
-            transition: var(--transition);
-        }
-        .nav.scrolled {
-            border-bottom-color: var(--border);
-        }
-        .nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 0.8rem 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
         }
         .nav-logo {
             font-weight: 800;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             letter-spacing: 0.05em;
             color: var(--accent);
             text-decoration: none;
@@ -120,147 +111,291 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #0a0a0a;
             font-weight: 900;
         }
-        .nav-cta {
-            padding: 0.65rem 1.5rem;
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+        .nav-link:hover {
+            color: var(--accent);
+        }
+        .nav-link.vault-link {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .vault-badge {
             background: var(--accent-fire);
             color: #fff;
-            border-radius: 8px;
+            font-size: 0.65rem;
             font-weight: 700;
-            font-size: 0.9rem;
+            padding: 0.15rem 0.45rem;
+            border-radius: 50px;
+            min-width: 18px;
+            text-align: center;
+        }
+        .nav-cta {
+            padding: 0.5rem 1.2rem;
+            background: var(--accent-fire);
+            color: #fff;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
             text-decoration: none;
             letter-spacing: 0.03em;
             transition: var(--transition);
         }
         .nav-cta:hover {
-            box-shadow: 0 6px 25px var(--accent-fire-glow);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 18px var(--accent-fire-glow);
         }
 
-        /* ── SECTIONS ── */
-        .section {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 6rem 2rem;
-        }
-
-        /* ── HERO ── */
-        .hero {
-            min-height: 100vh;
-            display: flex;
+        /* ── MODES (View Switching) ── */
+        .view {
+            display: none;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            flex: 1;
+        }
+        .view.active {
+            display: flex;
+        }
+
+        /* ── GENERATOR VIEW ── */
+        .header {
             text-align: center;
-            padding-top: 5rem;
+            margin-bottom: 2rem;
         }
-        .hero-stamp {
+        .header .motto {
             display: inline-block;
-            padding: 0.5rem 1.2rem;
-            background: rgba(232, 93, 58, 0.12);
-            border: 1px solid rgba(232, 93, 58, 0.3);
+            font-weight: 800;
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
             color: var(--accent-fire);
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-            animation: fadeInUp 0.8s ease;
+            background: rgba(232, 93, 58, 0.1);
+            padding: 0.3rem 0.9rem;
+            border-radius: 50px;
+            margin-bottom: 0.8rem;
         }
-        .hero h1 {
-            font-size: clamp(2.8rem, 8vw, 6rem);
-            font-weight: 900;
-            letter-spacing: -0.04em;
-            line-height: 1.05;
-            margin-bottom: 1.2rem;
-            animation: fadeInUp 0.8s ease 0.1s both;
-            text-transform: uppercase;
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.4rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
         }
-        .hero h1 .line-strike {
-            display: block;
-            font-size: clamp(1.4rem, 3vw, 2rem);
-            font-weight: 400;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            text-decoration: line-through;
-            text-decoration-color: var(--accent-fire);
-            text-decoration-thickness: 3px;
-            text-underline-offset: 10px;
-            margin-bottom: 0.3rem;
-        }
-        .hero h1 .line-main {
-            display: block;
-            background: linear-gradient(135deg, #fff 0%, #d4b87a 50%, #e0c78a 100%);
+        .header h1 span {
+            background: linear-gradient(135deg, #fff, #d4b87a);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .hero .hero-tagline {
-            font-size: 1.15rem;
+        .header .subtitle {
             color: var(--text-secondary);
-            max-width: 600px;
-            margin-bottom: 2.5rem;
-            animation: fadeInUp 0.8s ease 0.2s both;
-            line-height: 1.6;
+            font-size: 0.9rem;
+            margin-top: 0.4rem;
         }
-        .hero .hero-tagline strong {
-            color: var(--text);
-        }
-        .hero-cta-group {
+
+        /* Tone Selector */
+        .tone-selector {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+            gap: 0.4rem;
             justify-content: center;
-            animation: fadeInUp 0.8s ease 0.3s both;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
-        .btn-fire {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1.1rem 2.5rem;
-            background: var(--accent-fire);
-            color: #fff;
-            font-size: 1.1rem;
+        .tone-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
             font-weight: 700;
-            text-decoration: none;
-            border-radius: 10px;
-            letter-spacing: 0.03em;
-            transition: var(--transition);
-            border: none;
             cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            letter-spacing: 0.03em;
+            font-family: inherit;
+            white-space: nowrap;
         }
-        .btn-fire:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px var(--accent-fire-glow);
+        .tone-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text);
         }
-        .btn-ghost {
-            display: inline-flex;
+        .tone-btn.active-fire {
+            background: rgba(232, 93, 58, 0.2);
+            border-color: var(--accent-fire);
+            color: var(--accent-fire);
+            box-shadow: 0 0 12px rgba(232, 93, 58, 0.15);
+        }
+        .tone-btn.active-firm {
+            background: rgba(212, 165, 116, 0.2);
+            border-color: #d4a574;
+            color: #d4a574;
+            box-shadow: 0 0 12px rgba(212, 165, 116, 0.15);
+        }
+        .tone-btn.active-direct {
+            background: rgba(201, 169, 110, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+        .tone-btn.active-polite {
+            background: rgba(184, 160, 216, 0.2);
+            border-color: #b8a0d8;
+            color: #b8a0d8;
+            box-shadow: 0 0 12px rgba(184, 160, 216, 0.15);
+        }
+        .tone-btn.active-praiser {
+            background: rgba(126, 184, 218, 0.2);
+            border-color: var(--accent-ice);
+            color: var(--accent-ice);
+            box-shadow: 0 0 12px rgba(126, 184, 218, 0.15);
+        }
+
+        /* Input Card */
+        .input-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 2rem 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .input-card:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 35px var(--accent-glow);
+        }
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+        .input-group:last-of-type {
+            margin-bottom: 0;
+        }
+        .input-group label {
+            display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 1.1rem 2.5rem;
-            background: transparent;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .input-group label .number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--border);
             color: var(--text);
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            border-radius: 10px;
-            letter-spacing: 0.03em;
-            border: 1px solid var(--border-light);
-            transition: var(--transition);
-            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 800;
         }
-        .btn-ghost:hover {
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 0.9rem 1.1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            resize: vertical;
+        }
+        .input-group textarea {
+            min-height: 70px;
+            resize: none;
+        }
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
             border-color: var(--accent);
-            background: rgba(201, 169, 110, 0.06);
+            box-shadow: 0 0 0 3px var(--accent-glow);
         }
-        @keyframes fadeInUp {
+        .input-group input::placeholder,
+        .input-group textarea::placeholder {
+            color: #444;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 1.1rem;
+            background: linear-gradient(135deg, #e85d3a, #c9442a);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: 0.04em;
+            transition: all 0.3s ease;
+            margin-top: 1.2rem;
+            text-transform: uppercase;
+        }
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--accent-fire-glow);
+        }
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Free banner */
+        .free-banner {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 0.8rem;
+            background: rgba(201, 169, 110, 0.06);
+            border: 1px solid rgba(201, 169, 110, 0.2);
+            border-radius: var(--radius);
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .free-banner .free-count {
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        /* Output Area */
+        .output-container {
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            display: none;
+            animation: fadeSlideIn 0.5s ease;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+        .output-container.visible {
+            display: block;
+        }
+        @keyframes fadeSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(25px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -268,843 +403,1307 @@
             }
         }
 
-        /* ── FREE FIRST DOCUMENT BANNER ── */
-        .free-banner {
-            background: linear-gradient(135deg, rgba(201, 169, 110, 0.1), rgba(232, 93, 58, 0.08));
-            border: 1px solid rgba(201, 169, 110, 0.25);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem 2rem;
-            text-align: center;
-            max-width: 700px;
-            margin: 0 auto;
-            animation: fadeInUp 0.8s ease 0.35s both;
-        }
-        .free-banner .free-badge {
-            display: inline-block;
-            background: var(--accent);
-            color: #0a0a0a;
-            font-weight: 800;
-            font-size: 0.8rem;
-            padding: 0.3rem 0.9rem;
-            border-radius: 50px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            margin-bottom: 0.6rem;
-        }
-        .free-banner p {
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: var(--text);
-        }
-        .free-banner p span {
-            color: var(--accent);
-        }
-
-        /* ── SPECTRUM SECTION ── */
-        .spectrum-section {
-            text-align: center;
-        }
-        .spectrum-section .section-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-        }
-        .spectrum-section h2 {
-            font-size: clamp(1.8rem, 4vw, 2.6rem);
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 3rem;
-        }
-        .spectrum-bar {
+        .output-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 0.5rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-elevated);
+            flex-wrap: wrap;
+            gap: 0.8rem;
         }
-        .spectrum-point {
-            flex: 1;
-            text-align: center;
-            padding: 1rem 0.5rem;
+        .output-header .doc-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .output-header .doc-type {
+            font-size: 0.75rem;
             font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.03em;
-            position: relative;
-            z-index: 1;
-            transition: var(--transition);
-            cursor: default;
-        }
-        .spectrum-point.hellraiser {
-            color: var(--accent-fire);
-        }
-        .spectrum-point.firm {
-            color: #d4a574;
-        }
-        .spectrum-point.neutral {
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
             color: var(--accent);
         }
-        .spectrum-point.polite {
-            color: #b8a0d8;
+        .tone-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 50px;
+            letter-spacing: 0.04em;
         }
-        .spectrum-point.praiser {
+        .tone-badge.fire {
+            background: rgba(232, 93, 58, 0.2);
+            color: var(--accent-fire);
+        }
+        .tone-badge.ice {
+            background: rgba(126, 184, 218, 0.2);
             color: var(--accent-ice);
         }
-        .spectrum-slider {
-            position: absolute;
-            top: 8px;
-            bottom: 8px;
-            left: 2%;
-            width: 18%;
-            background: rgba(201, 169, 110, 0.1);
-            border: 2px solid var(--accent);
-            border-radius: 10px;
-            z-index: 0;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        .tone-badge.gold {
+            background: rgba(201, 169, 110, 0.2);
+            color: var(--accent);
         }
-        .spectrum-examples {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
+        .gene-indicators {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
         }
-        .spectrum-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.3rem;
-            text-align: center;
-            transition: var(--transition);
-            cursor: default;
-        }
-        .spectrum-card:hover {
-            border-color: var(--border-light);
-            transform: translateY(-3px);
-        }
-        .spectrum-card .emoji {
-            font-size: 1.6rem;
-            margin-bottom: 0.5rem;
-        }
-        .spectrum-card h4 {
+        .gene-tag {
+            font-size: 0.65rem;
             font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.02em;
-            margin-bottom: 0.3rem;
+            padding: 0.25rem 0.55rem;
+            border-radius: 50px;
+            letter-spacing: 0.03em;
         }
-        .spectrum-card p {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            line-height: 1.5;
+        .gene-mirror {
+            background: rgba(126, 184, 218, 0.2);
+            color: #7eb8da;
         }
-        .spectrum-card.fire {
-            border-left: 3px solid var(--accent-fire);
+        .gene-rosetta {
+            background: rgba(184, 160, 216, 0.2);
+            color: #b8a0d8;
         }
-        .spectrum-card.ice {
-            border-left: 3px solid var(--accent-ice);
+        .gene-arbiter {
+            background: rgba(212, 165, 116, 0.2);
+            color: #d4a574;
         }
-        .spectrum-card.gold {
-            border-left: 3px solid var(--accent);
+        .gene-catalyst {
+            background: rgba(140, 199, 161, 0.2);
+            color: #8cc7a1;
+        }
+        .gene-magna {
+            background: rgba(217, 139, 139, 0.2);
+            color: #d98b8b;
         }
 
-        /* ── THREE QUESTIONS ── */
-        .three-questions {
+        .output-body {
+            padding: 2rem 1.5rem;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        .output-body h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.02em;
+        }
+        .output-body h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+        }
+        .output-body h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-top: 1.3rem;
+            margin-bottom: 0.4rem;
+        }
+        .output-body strong {
+            color: #fff;
+        }
+        .output-body em {
+            color: var(--accent);
+            font-style: normal;
+        }
+        .output-body .block-quote {
+            border-left: 3px solid var(--accent);
+            padding-left: 1rem;
+            margin: 0.8rem 0;
+            color: #bbb;
+            font-style: italic;
+        }
+
+        /* Feedback Row */
+        .feedback-row {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface-elevated);
+            flex-wrap: wrap;
+        }
+        .feedback-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+        .feedback-btn {
+            padding: 0.45rem 0.9rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .feedback-btn:hover {
+            border-color: var(--border-light);
+            color: var(--text);
+        }
+        .feedback-btn.thumbs-up.voted {
+            background: rgba(76, 175, 145, 0.2);
+            border-color: var(--accent-success);
+            color: var(--accent-success);
+        }
+        .feedback-btn.thumbs-down.voted {
+            background: rgba(232, 93, 58, 0.2);
+            border-color: var(--accent-fire);
+            color: var(--accent-fire);
+        }
+        .feedback-thanks {
+            font-size: 0.75rem;
+            color: var(--accent-success);
+            font-weight: 600;
+            display: none;
+        }
+        .feedback-thanks.visible {
+            display: inline;
+        }
+
+        /* Output Actions */
+        .output-actions {
+            display: flex;
+            gap: 0.6rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            transition: all 0.2s ease;
+            letter-spacing: 0.03em;
+            font-family: inherit;
+        }
+        .action-btn:hover {
+            background: var(--surface-elevated);
+            border-color: var(--accent);
+        }
+        .action-btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #0a0a0a;
+        }
+        .action-btn.primary:hover {
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        /* Suggested Next */
+        .suggested-next {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            padding: 3rem 2.5rem;
-            text-align: center;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: none;
         }
-        .three-questions .section-label {
+        .suggested-next.visible {
+            display: block;
+            animation: fadeSlideIn 0.5s ease;
+        }
+        .suggested-next h3 {
             font-size: 0.8rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--accent-fire);
-            margin-bottom: 0.8rem;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
         }
-        .three-questions h2 {
-            font-size: clamp(1.6rem, 3.5vw, 2.2rem);
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 2.5rem;
-        }
-        .question-list {
+        .suggestion-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            max-width: 650px;
-            margin: 0 auto 2rem;
+            gap: 0.6rem;
         }
-        .question-item {
+        .suggestion-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            justify-content: space-between;
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 1.2rem 1.5rem;
-            text-align: left;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
             transition: var(--transition);
         }
-        .question-item:hover {
+        .suggestion-item:hover {
             border-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent-glow);
+            background: var(--surface-elevated);
         }
-        .question-number {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(201, 169, 110, 0.1);
-            border: 1px solid rgba(201, 169, 110, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
+        .suggestion-item .sug-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .suggestion-item .sug-arrow {
             color: var(--accent);
-            flex-shrink: 0;
-            font-size: 0.95rem;
-        }
-        .question-text .q-label {
-            font-size: 0.7rem;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            margin-bottom: 0.2rem;
-        }
-        .question-text .q-example {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            font-style: italic;
         }
 
-        /* ── USE CASES ── */
-        .usecases-section {
+        /* Email Capture */
+        .email-capture {
+            background: linear-gradient(135deg, rgba(201, 169, 110, 0.08), rgba(232, 93, 58, 0.05));
+            border: 1px solid rgba(201, 169, 110, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
             text-align: center;
+            display: none;
         }
-        .usecases-section .section-label {
-            font-size: 0.8rem;
+        .email-capture.visible {
+            display: block;
+            animation: fadeSlideIn 0.5s ease;
+        }
+        .email-capture h3 {
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+            font-size: 1rem;
+        }
+        .email-capture p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
             margin-bottom: 1rem;
         }
-        .usecases-section h2 {
-            font-size: clamp(1.8rem, 4vw, 2.4rem);
+        .email-capture .email-row {
+            display: flex;
+            gap: 0.6rem;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .email-capture input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .email-capture input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .email-capture button {
+            padding: 0.7rem 1.3rem;
+            background: var(--accent);
+            color: #0a0a0a;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        .email-capture button:hover {
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .email-capture .skip-link {
+            display: block;
+            margin-top: 0.8rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+            text-decoration: underline;
+        }
+        .email-capture .confirmation {
+            display: none;
+            color: var(--accent-success);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .email-capture .confirmation.visible {
+            display: block;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 3rem;
+            color: var(--text-secondary);
+            flex-direction: column;
+        }
+        .loading-overlay.visible {
+            display: flex;
+        }
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent-fire);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .loading-text {
+            font-size: 0.85rem;
             font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* ── VAULT VIEW ── */
+        .vault-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .vault-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
             letter-spacing: -0.02em;
-            margin-bottom: 2.5rem;
         }
-        .usecase-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.2rem;
-            text-align: left;
+        .vault-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
-        .usecase-card {
+        .vault-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .vault-item {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 1.5rem;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
             transition: var(--transition);
-            position: relative;
-            overflow: hidden;
+            flex-wrap: wrap;
+            gap: 0.8rem;
         }
-        .usecase-card:hover {
+        .vault-item:hover {
             border-color: var(--border-light);
             background: var(--surface-elevated);
         }
-        .usecase-card .usecase-tag {
-            display: inline-block;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 0.25rem 0.6rem;
-            border-radius: 4px;
-            margin-bottom: 0.8rem;
-        }
-        .usecase-card .usecase-tag.fire {
-            background: rgba(232, 93, 58, 0.15);
-            color: var(--accent-fire);
-        }
-        .usecase-card .usecase-tag.ice {
-            background: rgba(126, 184, 218, 0.15);
-            color: var(--accent-ice);
-        }
-        .usecase-card .usecase-tag.gold {
-            background: rgba(201, 169, 110, 0.15);
-            color: var(--accent);
-        }
-        .usecase-card h4 {
-            font-weight: 700;
-            font-size: 0.95rem;
-            margin-bottom: 0.4rem;
-        }
-        .usecase-card p {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        /* ── TESTIMONIALS ── */
-        .testimonials {
-            text-align: center;
-        }
-        .testimonials .section-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-        }
-        .testimonials h2 {
-            font-size: clamp(1.8rem, 4vw, 2.2rem);
+        .vault-item .vault-title {
             font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 2.5rem;
-        }
-        .testimonial-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            text-align: left;
-        }
-        .testimonial-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            transition: var(--transition);
-        }
-        .testimonial-card:hover {
-            border-color: var(--border-light);
-        }
-        .testimonial-card .quote {
             font-size: 0.9rem;
-            color: var(--text-secondary);
-            font-style: italic;
-            margin-bottom: 1.2rem;
-            line-height: 1.7;
         }
-        .testimonial-card .quote strong {
-            color: var(--accent-fire);
-            font-style: normal;
-        }
-        .testimonial-card .author {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-        }
-        .testimonial-card .author-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-        .testimonial-card .author-info .name {
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-        .testimonial-card .author-info .role {
+        .vault-item .vault-date {
             font-size: 0.75rem;
             color: var(--text-muted);
         }
-
-        /* ── CTA ── */
-        .cta-section {
-            text-align: center;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 4rem 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .cta-section::before {
-            content: '';
-            position: absolute;
-            top: -30%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(232, 93, 58, 0.12) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .cta-section .free-stamp {
-            display: inline-block;
-            background: var(--accent-fire);
-            color: #fff;
-            font-weight: 800;
-            font-size: 0.9rem;
-            padding: 0.4rem 1.2rem;
+        .vault-item .vault-tone {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
             border-radius: 50px;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 1.5rem;
-            position: relative;
-            animation: pulseFire 2s infinite;
         }
-        @keyframes pulseFire {
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(232, 93, 58, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 0 18px rgba(232, 93, 58, 0);
-            }
-        }
-        .cta-section h2 {
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            position: relative;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-        }
-        .cta-section h2 span {
-            color: var(--accent-fire);
-        }
-        .cta-section .cta-subtitle {
-            color: var(--text-secondary);
-            position: relative;
-            margin-bottom: 2rem;
-            font-size: 1.05rem;
-            max-width: 550px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .cta-section .btn-fire-large {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.6rem;
-            padding: 1.3rem 3rem;
-            background: var(--accent-fire);
-            color: #fff;
-            font-size: 1.2rem;
-            font-weight: 800;
-            text-decoration: none;
-            border-radius: 12px;
-            letter-spacing: 0.04em;
-            transition: var(--transition);
-            position: relative;
-            text-transform: uppercase;
-        }
-        .cta-section .btn-fire-large:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 50px var(--accent-fire-glow);
-        }
-        .cta-section .cta-note {
-            font-size: 0.8rem;
+        .vault-empty {
+            text-align: center;
+            padding: 3rem;
             color: var(--text-muted);
-            margin-top: 1.2rem;
-            position: relative;
+        }
+        .vault-empty .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
         }
 
         /* ── FOOTER ── */
         .footer {
             text-align: center;
-            padding: 3rem 2rem;
+            padding: 2rem 0;
+            margin-top: auto;
             border-top: 1px solid var(--border);
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             letter-spacing: 0.04em;
         }
-        .footer a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        .footer a:hover {
-            color: var(--accent-fire);
-        }
-        .footer .motto {
+        .footer .footer-motto {
             font-weight: 700;
             color: var(--accent-fire);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             letter-spacing: 0.06em;
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.4rem;
             text-transform: uppercase;
         }
 
         /* ── RESPONSIVE ── */
-        @media (max-width: 768px) {
-            .section {
-                padding: 4rem 1.2rem;
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 1rem 1rem;
             }
-            .three-questions {
-                padding: 2rem 1.2rem;
+            .header h1 {
+                font-size: 1.6rem;
             }
-            .nav {
-                padding: 0.8rem 1.2rem;
+            .input-card {
+                padding: 1.3rem 1rem;
             }
-            .hero h1 {
-                font-size: 2.2rem;
+            .output-body {
+                padding: 1.2rem 1rem;
             }
-            .hero h1 .line-strike {
-                font-size: 1.1rem;
+            .nav-links {
+                gap: 0.6rem;
             }
-            .spectrum-bar {
-                flex-wrap: wrap;
-                gap: 0.3rem;
-            }
-            .spectrum-point {
+            .tone-btn {
                 font-size: 0.7rem;
-                padding: 0.6rem 0.3rem;
+                padding: 0.4rem 0.7rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="page-content">
-
+    <div class="app-container">
         <!-- Navigation -->
-        <nav class="nav" id="nav">
-            <div class="nav-inner">
-                <a href="#" class="nav-logo">
-                    <span class="logo-mark">V</span> Vellum
-                </a>
-                <a href="#cta" class="nav-cta">First Doc Free →</a>
+        <nav class="nav">
+            <a href="#" class="nav-logo" onclick="switchView('generator'); return false;">
+                <span class="logo-mark">V</span> Vellum
+            </a>
+            <div class="nav-links">
+                <button class="nav-link vault-link" onclick="switchView('vault')">
+                    📦 Vault <span class="vault-badge" id="vaultCount">0</span>
+                </button>
+                <button class="nav-link" id="signoutLink" style="display:none;" onclick="signOut()">Sign out</button>
+                <a href="#" class="nav-cta" id="navWhopCta" onclick="document.getElementById('ctaSection').scrollIntoView({behavior:'smooth'}); return false;">Go Unlimited</a>
             </div>
         </nav>
 
-        <!-- Hero -->
-        <section class="hero section">
-            <div class="hero-stamp">⚠️ Not Your Grandma's Template</div>
-            <h1>
-                <span class="line-strike">Cookie Cutter Templates</span>
-                <span class="line-main">Fuck Your Template.</span>
-            </h1>
-            <p class="hero-tagline">
-                You got something to <strong>bitch about?</strong> Does the entire team need their <strong>ass reamed?</strong>
-                Need a document so <strong>polite it curtsies?</strong> We got you.<br>
-                From <strong>Custom Hellraisers to Polite Praisers</strong> — Vellum architects the exact document your situation demands.
-                <strong>Three questions. That's it.</strong>
-            </p>
-            <div class="hero-cta-group">
-                <a href="#cta" class="btn-fire">🔥 Raise Hell (Free)</a>
-                <a href="#spectrum" class="btn-ghost">See the Spectrum ↓</a>
+        <!-- ── GENERATOR VIEW ── -->
+        <div class="view active" id="view-generator">
+            <div class="header">
+                <div class="motto">F*** Your Cookie Cutter Template.</div>
+                <h1>Three Questions.<br><span>Perfect Document.</span></h1>
+                <p class="subtitle">From Custom Hellraisers to Polite Praisers — we architect the document your situation demands.</p>
             </div>
-            <div class="free-banner" style="margin-top: 2rem;">
-                <span class="free-badge">First Document Free</span>
-                <p>No credit card. No bullshit. <span>Just your perfect document.</span></p>
-            </div>
-        </section>
 
-        <!-- The Spectrum -->
-        <section class="spectrum-section section" id="spectrum">
-            <p class="section-label">The Vellum Spectrum</p>
-            <h2>From Hellraiser to Praiser.<br>We do it all.</h2>
-            <div class="spectrum-bar" id="spectrumBar">
-                <div class="spectrum-point hellraiser">🔥<br>Hellraiser</div>
-                <div class="spectrum-point firm">⚡<br>Firm</div>
-                <div class="spectrum-point neutral">🎯<br>Direct</div>
-                <div class="spectrum-point polite">🤝<br>Polite</div>
-                <div class="spectrum-point praiser">❄️<br>Praiser</div>
-                <div class="spectrum-slider" id="spectrumSlider"></div>
+            <!-- Free banner -->
+            <div class="free-banner" id="freeBanner">
+                🎉 <span class="free-count" id="freeCount">1</span> free document remaining. No credit card. No bullshit.
             </div>
-            <div class="spectrum-examples">
-                <div class="spectrum-card fire">
-                    <div class="emoji">🔥</div>
-                    <h4>Team Ass-Reaming</h4>
-                    <p>"Dear Team: The Q3 deliverables were a masterclass in how to torch stakeholder trust..."</p>
-                </div>
-                <div class="spectrum-card gold">
-                    <div class="emoji">⚖️</div>
-                    <h4>Conflict Resolution</h4>
-                    <p>"This isn't about blame — it's about building a system where both sides win..."</p>
-                </div>
-                <div class="spectrum-card ice">
-                    <div class="emoji">🤝</div>
-                    <h4>Polite Praise</h4>
-                    <p>"I wanted to take a moment to express my deepest appreciation for your extraordinary..."</p>
-                </div>
-            </div>
-        </section>
 
-        <!-- Three Questions -->
-        <section class="three-questions section">
-            <p class="section-label">How It Works</p>
-            <h2>Three questions. That's literally it.</h2>
-            <div class="question-list">
-                <div class="question-item">
-                    <div class="question-number">1</div>
-                    <div class="question-text">
-                        <div class="q-label">Who Are You?</div>
-                        <div class="q-example">"Sarah Chen, VP of Engineering — and I'm pissed"</div>
-                    </div>
-                </div>
-                <div class="question-item">
-                    <div class="question-number">2</div>
-                    <div class="question-text">
-                        <div class="q-label">What's the Issue?</div>
-                        <div class="q-example">"Q3 deadlines blown. Specs are garbage. Nobody's accountable."</div>
-                    </div>
-                </div>
-                <div class="question-item">
-                    <div class="question-number">3</div>
-                    <div class="question-text">
-                        <div class="q-label">What's the Desired Outcome?</div>
-                        <div class="q-example">"A system where engineering and product stop pointing fingers and start shipping."</div>
-                    </div>
-                </div>
+            <!-- Tone Selector -->
+            <div class="tone-selector" id="toneSelector">
+                <button class="tone-btn active-fire" data-tone="hellraiser">🔥 Hellraiser</button>
+                <button class="tone-btn" data-tone="firm">⚡ Firm</button>
+                <button class="tone-btn" data-tone="direct">🎯 Direct</button>
+                <button class="tone-btn" data-tone="polite">🤝 Polite</button>
+                <button class="tone-btn" data-tone="praiser">❄️ Praiser</button>
             </div>
-            <p style="font-weight: 700; color: var(--accent); font-size: 1.1rem;">Vellum handles the rest. Your perfect document — delivered instantly.</p>
-        </section>
 
-        <!-- Use Cases -->
-        <section class="usecases-section section">
-            <p class="section-label">Who's It For?</p>
-            <h2>Everyone. Literally everyone.</h2>
-            <div class="usecase-grid">
-                <div class="usecase-card">
-                    <span class="usecase-tag fire">Hellraiser Mode</span>
-                    <h4>The Pissed-Off Manager</h4>
-                    <p>Your team blew the deadline. Again. You need a document that names names, lights fires, and makes the consequences crystal clear. Vellum delivers the scorched-earth memo they'll never forget.</p>
+            <!-- Input Card -->
+            <div class="input-card" id="inputCard">
+                <div class="input-group">
+                    <label><span class="number">1</span> Who Are You?</label>
+                    <input type="text" id="nameOccupation" placeholder="e.g. Sarah Chen, VP of Engineering — and I'm pissed">
                 </div>
-                <div class="usecase-card">
-                    <span class="usecase-tag gold">Direct Mode</span>
-                    <h4>The CEO With No Time</h4>
-                    <p>Board update in 30 minutes. You need a document that's sharp, strategic, and makes you look like the genius you are. No fluff. No filler. Just power.</p>
+                <div class="input-group">
+                    <label><span class="number">2</span> What's the Issue?</label>
+                    <textarea id="issueTopic" placeholder="e.g. Q3 deadlines blown. Specs are garbage. Nobody's accountable." rows="2"></textarea>
                 </div>
-                <div class="usecase-card">
-                    <span class="usecase-tag ice">Polite Mode</span>
-                    <h4>The Diplomat</h4>
-                    <p>You need to say "no" to a powerful stakeholder — and make them thank you for it. Vellum crafts the velvet-glove rejection that preserves the relationship and your reputation.</p>
+                <div class="input-group">
+                    <label><span class="number">3</span> What's the Desired Outcome?</label>
+                    <textarea id="desiredOutcome" placeholder="e.g. A system where engineering and product stop pointing fingers and start shipping." rows="2"></textarea>
                 </div>
-                <div class="usecase-card">
-                    <span class="usecase-tag fire">Hellraiser Mode</span>
-                    <h4>The Founder Ready to Snap</h4>
-                    <p>Your co-founder made a promise they couldn't keep. Clients are furious. You need a come-to-Jesus document that's part therapy, part ultimatum. Vellum architects it.</p>
-                </div>
-                <div class="usecase-card">
-                    <span class="usecase-tag gold">Direct Mode</span>
-                    <h4>The Freelancer</h4>
-                    <p>Client's scope-creeping you into poverty. You need a boundary-setting document that's firm, professional, and gets you paid. Vellum's got your back.</p>
-                </div>
-                <div class="usecase-card">
-                    <span class="usecase-tag ice">Polite Mode</span>
-                    <h4>The Job Seeker</h4>
-                    <p>You need a cover letter and negotiation email that makes you irresistible without sounding desperate. Vellum writes the document that opens doors.</p>
-                </div>
+                <button class="generate-btn" id="generateBtn" onclick="generateDocument()">
+                    ◆ Generate My Document
+                </button>
             </div>
-        </section>
 
-        <!-- Testimonials -->
-        <section class="testimonials section">
-            <p class="section-label">Proof</p>
-            <h2>What the early users say.</h2>
-            <div class="testimonial-grid">
-                <div class="testimonial-card">
-                    <p class="quote">"I needed to <strong>ream my entire engineering team</strong> without getting HR called on me. Vellum wrote a document so perfectly balanced between 'you're fucked' and 'here's the way forward' that my CTO asked who my consultant was."</p>
-                    <div class="author">
-                        <div class="author-avatar">JD</div>
-                        <div class="author-info">
-                            <div class="name">James D.</div>
-                            <div class="role">VP of Product</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-card">
-                    <p class="quote">"I described a tense co-founder conflict. Vellum produced a resolution framework so good our <strong>actual mediator borrowed structure from it.</strong> I'm not kidding."</p>
-                    <div class="author">
-                        <div class="author-avatar">ML</div>
-                        <div class="author-info">
-                            <div class="name">Maya L.</div>
-                            <div class="role">Startup Founder</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="testimonial-card">
-                    <p class="quote">"I asked for a <strong>polite but firm 'fuck off'</strong> to a client who hadn't paid in 90 days. The document Vellum wrote got me paid within 4 hours AND the client apologized. Black magic."</p>
-                    <div class="author">
-                        <div class="author-avatar">RK</div>
-                        <div class="author-info">
-                            <div class="name">Ryan K.</div>
-                            <div class="role">Independent Consultant</div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Loading -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+                <span class="loading-text" id="loadingText">Architecting your document...</span>
             </div>
-        </section>
 
-        <!-- CTA -->
-        <section class="cta-section section" id="cta">
-            <span class="free-stamp">First Document Free</span>
-            <h2>Stop Writing<br><span>Shitty Documents.</span></h2>
-            <p class="cta-subtitle">
-                You've got something to say. Say it with <strong>precision</strong> — whether that means
-                burning bridges or building them. Vellum is your document architect.
-                <br><br>
-                <strong>First document is on us. No credit card. No risk. Just results.</strong>
-            </p>
-            <a href="#app-section" class="btn-fire-large">🔥 Get Your Free Document Now</a>
-            <p class="cta-note">Available on Whop. Unlimited documents. One price.</p>
-        </section>
+            <!-- Output -->
+            <div class="output-container" id="outputContainer">
+                <div class="output-header">
+                    <div class="doc-meta">
+                        <span class="doc-type" id="docTypeLabel">STRATEGIC FRAMEWORK</span>
+                        <span class="tone-badge fire" id="toneBadge">🔥 Hellraiser</span>
+                    </div>
+                    <div class="gene-indicators" id="geneIndicators"></div>
+                </div>
+                <div class="output-body" id="outputBody"></div>
+                <div class="feedback-row">
+                    <span class="feedback-label">Was this document on point?</span>
+                    <button class="feedback-btn thumbs-up" onclick="submitFeedback('up')">👍 Perfect</button>
+                    <button class="feedback-btn thumbs-down" onclick="submitFeedback('down')">👎 Not quite</button>
+                    <span class="feedback-thanks" id="feedbackThanks">Got it — learning for next time. 🧠</span>
+                </div>
+                <div class="output-actions">
+                    <button class="action-btn primary" onclick="copyDocument()">📋 Copy</button>
+                    <button class="action-btn" onclick="regenerateDocument()">🔄 Regenerate</button>
+                    <button class="action-btn" onclick="downloadDocument()">💾 Download .md</button>
+                </div>
+            </div>
 
-        <!-- App -->
-        <section class="section" id="app-section" style="max-width: 720px; margin: 0 auto; padding: 4rem 2rem 6rem;">
-            <style>
-                #app-section input, #app-section textarea {
-                    width: 100%;
-                    background: var(--surface);
-                    border: 1px solid var(--border-light);
-                    border-radius: var(--radius);
-                    color: var(--text);
-                    padding: 0.9rem 1rem;
-                    font-size: 1rem;
-                    font-family: inherit;
-                    margin-bottom: 1rem;
-                    transition: var(--transition);
-                }
-                #app-section input:focus, #app-section textarea:focus {
-                    outline: none;
-                    border-color: var(--accent);
-                }
-                #app-section textarea { min-height: 160px; resize: vertical; }
-                #app-section button {
-                    background: var(--accent-fire);
-                    color: #fff;
-                    border: none;
-                    border-radius: var(--radius);
-                    padding: 0.9rem 1.6rem;
-                    font-size: 1rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: var(--transition);
-                }
-                #app-section button:hover { filter: brightness(1.1); }
-                #app-section h2 { margin-bottom: 1rem; }
-                #app-section .app-meta {
-                    color: var(--text-secondary);
-                    margin-bottom: 1.5rem;
-                }
-                #app-section .app-meta a { color: var(--accent); }
-                #app-section pre {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius);
-                    padding: 1.25rem;
-                    margin-top: 1.5rem;
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                    color: var(--text);
-                    min-height: 3rem;
-                }
-            </style>
-            <div id="auth">
-                <h2>Get Your Document</h2>
-                <p class="app-meta">Enter your email and we'll send you a magic sign-in link. First document's free.</p>
-                <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
-                <button id="signup">Send Magic Link</button>
+            <!-- Suggested Next Documents -->
+            <div class="suggested-next" id="suggestedNext">
+                <h3>📋 You Might Also Need...</h3>
+                <div class="suggestion-list" id="suggestionList"></div>
             </div>
-            <div id="app" style="display:none;">
-                <h2>Architect Your Document</h2>
-                <p class="app-meta">Signed in as <span id="who"></span> · <a href="#" id="signout">Sign out</a></p>
-                <input id="title" type="text" placeholder="Document title (optional)">
-                <textarea id="prompt" placeholder="Describe the document your situation demands..."></textarea>
-                <button id="generate">Generate Document</button>
-                <pre id="output"></pre>
+
+            <!-- Email Capture / Sign-in -->
+            <div class="email-capture" id="emailCapture">
+                <div id="emailForm">
+                    <h3>Sign in to generate — and save to your Vault.</h3>
+                    <p>We'll email you a one-click magic sign-in link. No password. Your documents save to your Vault automatically.</p>
+                    <div class="email-row">
+                        <input type="email" id="emailInput" placeholder="you@example.com">
+                        <button onclick="captureEmail()">Send Magic Link</button>
+                    </div>
+                    <button class="skip-link" onclick="skipEmail()">Not now</button>
+                </div>
+                <div class="confirmation" id="emailConfirmation">✅ Magic link sent! Check your inbox — it's valid for 30 minutes.</div>
             </div>
-        </section>
+
+            <!-- CTA Section -->
+            <div class="email-capture visible" id="ctaSection" style="margin-top: 2rem;">
+                <h3>🔥 Go Unlimited — $29/month</h3>
+                <p>Unlimited documents. All tones. Full Vault access. Priority gene improvements. Cancel anytime.</p>
+                <a href="#" class="nav-cta" id="whopCta" style="display:inline-block;padding:0.8rem 2rem;font-size:1rem;">Get Vellum Unlimited →</a>
+                <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem;">Available on Whop. Secure payment. Instant access.</p>
+            </div>
+        </div>
+
+        <!-- ── VAULT VIEW ── -->
+        <div class="view" id="view-vault">
+            <div class="vault-header">
+                <h2>📦 Your Document Vault</h2>
+                <p>Every document you generate, stored and ready when you need it.</p>
+            </div>
+            <div class="vault-list" id="vaultList">
+                <div class="vault-empty">
+                    <div class="empty-icon">📭</div>
+                    <p>No documents yet. Go generate your first masterpiece.</p>
+                    <button class="action-btn primary" style="margin-top:1rem;" onclick="switchView('generator')">Create Document →</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Footer -->
         <footer class="footer">
-            <p class="motto">Fuck Your Cookie Cutter Template.™</p>
+            <p class="footer-motto">F*** Your Cookie Cutter Template.™</p>
             <p>Vellum — Cognitive Document Architecture™</p>
-            <p style="margin-top: 0.5rem;">
-                <a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">Contact</a>
-            </p>
+            <p style="margin-top:0.3rem;"><a href="#" style="color:var(--text-muted);">Privacy</a> · <a href="#" style="color:var(--text-muted);">Terms</a> · <a href="#" style="color:var(--text-muted);">Contact</a></p>
         </footer>
-
     </div>
 
     <script>
-        // Nav scroll effect
-        const nav = document.getElementById('nav');
-        window.addEventListener('scroll', () => {
-            nav.classList.toggle('scrolled', window.scrollY > 50);
-        });
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        const STATE = {
+            token: localStorage.getItem('vellum_token') || null,
+            user: null, // { email, free_docs_remaining, subscription_active } from /api/me
+            whopUrl: '',
+            selectedTone: 'hellraiser',
+            documentVault: [], // server-side documents when signed in
+            learningData: JSON.parse(localStorage.getItem('vellum_learning') || '{"feedback":[], "tonePreferences":{}, "geneSuccessRates":{}}'),
+            currentDocument: null,
+            feedbackSubmitted: false,
+        };
 
-        // Spectrum slider animation — moves on hover
-        const spectrumBar = document.getElementById('spectrumBar');
-        const spectrumSlider = document.getElementById('spectrumSlider');
-        const spectrumPoints = spectrumBar.querySelectorAll('.spectrum-point');
+        function saveState() {
+            localStorage.setItem('vellum_learning', JSON.stringify(STATE.learningData));
+        }
 
-        spectrumPoints.forEach((point, index) => {
-            point.addEventListener('mouseenter', () => {
-                const position = (index / (spectrumPoints.length - 1)) * 82; // 0% to 82%
-                spectrumSlider.style.left = position + '%';
-                spectrumSlider.style.borderColor = getComputedStyle(point).color;
-                spectrumSlider.style.background = getComputedStyle(point).color.replace(')',
-                    ', 0.12)').replace('rgb', 'rgba');
+        // ============================================
+        // API HELPERS
+        // ============================================
+        async function api(path, opts = {}) {
+            const headers = opts.headers || {};
+            headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+            if (STATE.token) headers['Authorization'] = 'Bearer ' + STATE.token;
+            return fetch(path, { ...opts, headers });
+        }
+
+        function signOut() {
+            localStorage.removeItem('vellum_token');
+            STATE.token = null;
+            STATE.user = null;
+            STATE.documentVault = [];
+            updateAuthUI();
+            updateVaultBadge();
+            updateFreeCount();
+            switchView('generator');
+        }
+
+        function updateAuthUI() {
+            document.getElementById('signoutLink').style.display = STATE.token ? 'inline' : 'none';
+        }
+
+        // ============================================
+        // GENE SYSTEM (cosmetic + learning signal)
+        // ============================================
+        const GENE_LIBRARY = {
+            mirror: {
+                name: 'Mirror',
+                cssClass: 'gene-mirror',
+                triggers: ['blame', 'frustrated', 'tired of', 'stop', 'sick of', 'blaming', 'conflict', 'tension',
+                    'misunderstood', 'pissed'
+                ],
+                weight: 1.0,
+            },
+            rosetta: {
+                name: 'Rosetta Stone',
+                cssClass: 'gene-rosetta',
+                triggers: ['explain', 'justify', 'prove', 'value', 'roi', 'business', 'technical', 'non-technical',
+                    'board', 'investor', 'translate', 'bridge'
+                ],
+                weight: 1.0,
+            },
+            arbiter: {
+                name: 'Arbiter',
+                cssClass: 'gene-arbiter',
+                triggers: ['disagree', 'disagreement', 'conflict', 'both sides', 'compromise', 'resolution', 'decide',
+                    'decision', 'stuck', 'impasse', 'blame'
+                ],
+                weight: 1.0,
+            },
+            catalyst: {
+                name: 'Catalyst',
+                cssClass: 'gene-catalyst',
+                triggers: ['start', 'launch', 'action', 'momentum', 'kickoff', 'motivate', 'inspire', 'move forward',
+                    'quick win', 'first step', 'now', 'immediate'
+                ],
+                weight: 1.0,
+            },
+            magna: {
+                name: 'Magna Carta',
+                cssClass: 'gene-magna',
+                triggers: ['charter', 'principles', 'rules', 'foundation', 'guidelines', 'rights', 'responsibilities',
+                    'framework', 'system', 'process', 'policy', 'standard'
+                ],
+                weight: 1.0,
+            },
+        };
+
+        function detectGenes(issue, outcome) {
+            const combined = (issue + ' ' + outcome).toLowerCase();
+            const scored = Object.entries(GENE_LIBRARY).map(([key, gene]) => {
+                const baseScore = gene.triggers.filter(kw => combined.includes(kw)).length;
+                const learnedWeight = STATE.learningData.geneSuccessRates[key] || 1.0;
+                return { key, ...gene, score: baseScore * learnedWeight * gene.weight };
             });
-        });
+            scored.sort((a, b) => b.score - a.score);
+            return scored.slice(0, 3);
+        }
 
-        spectrumBar.addEventListener('mouseleave', () => {
-            spectrumSlider.style.left = '40%';
-            spectrumSlider.style.borderColor = 'var(--accent)';
-            spectrumSlider.style.background = 'rgba(201, 169, 110, 0.1)';
-        });
+        // ============================================
+        // TONE PROFILES (drive the Claude prompt)
+        // ============================================
+        const TONE_PROFILES = {
+            hellraiser: {
+                name: 'Hellraiser',
+                cssClass: 'fire',
+                emoji: '🔥',
+                docType: 'DIRECTIVE',
+                directive: 'Maximum intensity. Blunt, confrontational, zero hedging, zero corporate softening. Scorched-earth energy — but sharp and controlled enough that the author could actually send it.',
+                suggestedNext: [
+                    'Follow-up: Individual accountability emails for each team member',
+                    'Escalation: Formal performance improvement plan documentation',
+                    'The "Clean House" reorganization proposal',
+                ],
+            },
+            firm: {
+                name: 'Firm',
+                cssClass: 'gold',
+                emoji: '⚡',
+                docType: 'STRATEGIC FRAMEWORK',
+                directive: 'Serious and unambiguous. Clear expectations, defined consequences, professional but immovable. No aggression, no apology.',
+                suggestedNext: [
+                    'The detailed action plan with milestones',
+                    'Stakeholder update: Progress report template',
+                    'Accountability tracker spreadsheet',
+                ],
+            },
+            direct: {
+                name: 'Direct',
+                cssClass: 'gold',
+                emoji: '🎯',
+                docType: 'STRATEGIC FRAMEWORK',
+                directive: 'Plain, efficient, and neutral. Say exactly what needs to happen and why, without emotional coloring in either direction.',
+                suggestedNext: [
+                    'The executive summary for leadership',
+                    'Project roadmap with key milestones',
+                    'Team alignment document',
+                ],
+            },
+            polite: {
+                name: 'Polite',
+                cssClass: 'ice',
+                emoji: '🤝',
+                docType: 'STRATEGIC FRAMEWORK',
+                directive: 'Courteous, constructive, and collaborative. Acknowledge the other side, preserve the relationship, and still move the outcome forward.',
+                suggestedNext: [
+                    'The gracious follow-up thank-you note',
+                    'Relationship-strengthening check-in email',
+                    'Collaborative workshop proposal',
+                ],
+            },
+            praiser: {
+                name: 'Praiser',
+                cssClass: 'ice',
+                emoji: '❄️',
+                docType: 'APPRECIATION',
+                directive: 'Warm, generous, specific praise. Celebrate genuinely — concrete accomplishments, real impact, heartfelt gratitude. No backhanded notes.',
+                suggestedNext: [
+                    'Public recognition: LinkedIn recommendation draft',
+                    'The heartfelt team-wide appreciation announcement',
+                    'Award nomination letter',
+                ],
+            },
+        };
 
-        // Intersection Observer for scroll animations
-        const observerOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
+        function buildPrompt(nameOccupation, issue, outcome, tone) {
+            const profile = TONE_PROFILES[tone];
+            return [
+                'Architect a complete, ready-to-send document from these three answers:',
+                '',
+                '1. Who is the author: ' + nameOccupation,
+                '2. What is the issue: ' + issue,
+                '3. What is the desired outcome: ' + outcome,
+                '',
+                'Tone: ' + profile.name + '. ' + profile.directive,
+                '',
+                'Write the full document in Markdown. Open with a strong title as a level-1 heading, then the document body with clear sections. Do not include any preamble or commentary about the document — output only the document itself.',
+            ].join('\n');
+        }
+
+        function buildTitle(outcome, tone) {
+            const outcomeClean = outcome.replace(/^(a |an |to )/i, '').trim();
+            const suffix = tone === 'hellraiser' ? 'Ultimatum' : tone === 'praiser' ? 'Tribute' : 'Blueprint';
+            return 'The ' + capitalizeFirst(truncateText(outcomeClean, 60)) + ' ' + suffix;
+        }
+
+        // ============================================
+        // DOCUMENT GENERATION (real backend)
+        // ============================================
+        async function generateDocument() {
+            const nameOccupation = document.getElementById('nameOccupation').value.trim();
+            const issueTopic = document.getElementById('issueTopic').value.trim();
+            const desiredOutcome = document.getElementById('desiredOutcome').value.trim();
+
+            if (!nameOccupation || !issueTopic || !desiredOutcome) {
+                alert('All three questions must be answered. That\'s the deal.');
+                return;
+            }
+
+            if (!STATE.token) {
+                const emailCapture = document.getElementById('emailCapture');
+                emailCapture.classList.add('visible');
+                emailCapture.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const outputContainer = document.getElementById('outputContainer');
+            const suggestedNext = document.getElementById('suggestedNext');
+            const generateBtn = document.getElementById('generateBtn');
+
+            outputContainer.classList.remove('visible');
+            suggestedNext.classList.remove('visible');
+            loadingOverlay.classList.add('visible');
+            generateBtn.disabled = true;
+            STATE.feedbackSubmitted = false;
+
+            const loadingMessages = [
+                'Analyzing your situation...',
+                'Selecting the right genes...',
+                'Calibrating tone intensity...',
+                'Architecting your document...',
+                'Almost there...',
+            ];
+            let msgIndex = 0;
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = loadingMessages[0];
+            const msgInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                loadingText.textContent = loadingMessages[msgIndex];
+            }, 900);
+
+            const tone = STATE.selectedTone;
+            const title = buildTitle(desiredOutcome, tone);
+            const prompt = buildPrompt(nameOccupation, issueTopic, desiredOutcome, tone);
+
+            try {
+                const res = await api('/api/generate', {
+                    method: 'POST',
+                    body: JSON.stringify({ prompt, title }),
+                });
+
+                clearInterval(msgInterval);
+                loadingOverlay.classList.remove('visible');
+                generateBtn.disabled = false;
+
+                if (res.status === 401) {
+                    signOut();
+                    const emailCapture = document.getElementById('emailCapture');
+                    emailCapture.classList.add('visible');
+                    emailCapture.scrollIntoView({ behavior: 'smooth' });
+                    alert('Your session expired. Enter your email for a fresh magic link.');
+                    return;
                 }
-            });
-        }, observerOptions);
 
-        document.querySelectorAll(
-            '.spectrum-card, .usecase-card, .testimonial-card, .question-item, .free-banner').forEach(
-            el => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
-                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                observer.observe(el);
-            });
+                if (res.status === 402) {
+                    const j = await res.json().catch(() => ({}));
+                    if (j.purchase_url) setWhopLinks(j.purchase_url);
+                    if (STATE.user) STATE.user.free_docs_remaining = 0;
+                    updateFreeCount();
+                    document.getElementById('ctaSection').scrollIntoView({ behavior: 'smooth' });
+                    return;
+                }
 
-        // Trigger visible ones on load
-        setTimeout(() => {
-            document.querySelectorAll(
-                '.spectrum-card, .usecase-card, .testimonial-card, .question-item, .free-banner')
-                .forEach(el => {
-                    const rect = el.getBoundingClientRect();
-                    if (rect.top < window.innerHeight) {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
+                if (!res.ok) {
+                    alert('Generation failed on our side. Nothing was used up — try again in a moment.');
+                    return;
+                }
+
+                const j = await res.json();
+                if (typeof j.free_docs_remaining === 'number' && STATE.user) {
+                    STATE.user.free_docs_remaining = j.free_docs_remaining;
+                }
+
+                STATE.currentDocument = {
+                    id: j.document.id,
+                    title: j.document.title || title,
+                    docType: TONE_PROFILES[tone].docType,
+                    genes: detectGenes(issueTopic, desiredOutcome),
+                    content: j.document.content,
+                    tone: TONE_PROFILES[tone],
+                    toneKey: tone,
+                };
+                STATE.documentVault.unshift({
+                    id: j.document.id,
+                    title: STATE.currentDocument.title,
+                    content: j.document.content,
+                    created_at: j.document.created_at || new Date().toISOString(),
+                });
+
+                renderDocument(STATE.currentDocument);
+                updateVaultBadge();
+                updateFreeCount();
+
+                outputContainer.classList.add('visible');
+                renderSuggestedNext(STATE.currentDocument.tone);
+                suggestedNext.classList.add('visible');
+                outputContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('voted'));
+                document.getElementById('feedbackThanks').classList.remove('visible');
+            } catch (err) {
+                clearInterval(msgInterval);
+                loadingOverlay.classList.remove('visible');
+                generateBtn.disabled = false;
+                console.error(err);
+                alert('Network error — check your connection and try again.');
+            }
+        }
+
+        // ============================================
+        // MARKDOWN RENDERING (safe: escape, then format)
+        // ============================================
+        function renderMarkdown(md) {
+            const esc = escapeHtml(md);
+            const lines = esc.split('\n');
+            const out = [];
+            let inList = false;
+            for (const rawLine of lines) {
+                let line = rawLine;
+                if (/^\s*[-*] /.test(line)) {
+                    if (!inList) { out.push('<ul style="margin:0.4rem 0 0.4rem 1.4rem;">'); inList = true; }
+                    out.push('<li>' + inlineMd(line.replace(/^\s*[-*] /, '')) + '</li>');
+                    continue;
+                }
+                if (inList) { out.push('</ul>'); inList = false; }
+                if (/^### /.test(line)) out.push('<h3>' + inlineMd(line.slice(4)) + '</h3>');
+                else if (/^## /.test(line)) out.push('<h2>' + inlineMd(line.slice(3)) + '</h2>');
+                else if (/^# /.test(line)) out.push('<h1>' + inlineMd(line.slice(2)) + '</h1>');
+                else if (/^---+\s*$/.test(line)) out.push('<hr style="border:none;border-top:1px solid var(--border);margin:1.2rem 0;">');
+                else if (/^&gt; /.test(line)) out.push('<div class="block-quote">' + inlineMd(line.slice(5)) + '</div>');
+                else out.push(inlineMd(line));
+            }
+            if (inList) out.push('</ul>');
+            return out.join('\n');
+        }
+
+        function inlineMd(s) {
+            return s
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        }
+
+        function renderDocument(data) {
+            document.getElementById('docTypeLabel').textContent = data.docType;
+            const toneBadge = document.getElementById('toneBadge');
+            toneBadge.textContent = data.tone.emoji + ' ' + data.tone.name;
+            toneBadge.className = 'tone-badge ' + data.tone.cssClass;
+
+            const geneIndicators = document.getElementById('geneIndicators');
+            geneIndicators.innerHTML = data.genes.map(g =>
+                '<span class="gene-tag ' + g.cssClass + '">' + g.name + '</span>'
+            ).join('');
+
+            const outputBody = document.getElementById('outputBody');
+            outputBody.innerHTML = renderMarkdown(data.content);
+        }
+
+        function renderSuggestedNext(toneProfile) {
+            const suggestionList = document.getElementById('suggestionList');
+            suggestionList.innerHTML = toneProfile.suggestedNext.map(sug =>
+                '<div class="suggestion-item" onclick="quickGenerate(this.dataset.topic)" data-topic="' + escapeHtml(sug) + '">' +
+                '<span class="sug-text">' + escapeHtml(sug) + '</span>' +
+                '<span class="sug-arrow">→</span>' +
+                '</div>'
+            ).join('');
+        }
+
+        function quickGenerate(topic) {
+            document.getElementById('issueTopic').value = topic;
+            document.getElementById('desiredOutcome').value = 'Successful resolution and clear path forward';
+            switchView('generator');
+            setTimeout(() => {
+                document.getElementById('inputCard').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function regenerateDocument() {
+            document.getElementById('outputContainer').classList.remove('visible');
+            document.getElementById('suggestedNext').classList.remove('visible');
+            STATE.feedbackSubmitted = false;
+            document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('voted'));
+            document.getElementById('feedbackThanks').classList.remove('visible');
+            generateDocument();
+        }
+
+        // ============================================
+        // LEARNING ENGINE — FEEDBACK SYSTEM
+        // ============================================
+        function submitFeedback(type) {
+            if (STATE.feedbackSubmitted) return;
+            STATE.feedbackSubmitted = true;
+
+            const thumbsUp = document.querySelector('.feedback-btn.thumbs-up');
+            const thumbsDown = document.querySelector('.feedback-btn.thumbs-down');
+            const thanks = document.getElementById('feedbackThanks');
+
+            if (type === 'up') {
+                thumbsUp.classList.add('voted');
+                thumbsDown.classList.remove('voted');
+            } else {
+                thumbsDown.classList.add('voted');
+                thumbsUp.classList.remove('voted');
+            }
+            thanks.classList.add('visible');
+
+            const doc = STATE.currentDocument;
+            if (doc) {
+                STATE.learningData.feedback.push({
+                    timestamp: Date.now(),
+                    tone: doc.toneKey,
+                    genes: doc.genes.map(g => g.key),
+                    rating: type,
+                    issueKeywords: document.getElementById('issueTopic').value.toLowerCase().split(' '),
+                });
+                if (STATE.learningData.feedback.length > 200) {
+                    STATE.learningData.feedback = STATE.learningData.feedback.slice(-200);
+                }
+                if (!STATE.learningData.tonePreferences[doc.toneKey]) {
+                    STATE.learningData.tonePreferences[doc.toneKey] = { up: 0, down: 0 };
+                }
+                STATE.learningData.tonePreferences[doc.toneKey][type]++;
+                doc.genes.forEach(g => {
+                    if (!STATE.learningData.geneSuccessRates[g.key]) {
+                        STATE.learningData.geneSuccessRates[g.key] = 1.0;
+                    }
+                    if (type === 'up') {
+                        STATE.learningData.geneSuccessRates[g.key] = Math.min(2.0, STATE.learningData.geneSuccessRates[g.key] + 0.05);
+                    } else {
+                        STATE.learningData.geneSuccessRates[g.key] = Math.max(0.5, STATE.learningData.geneSuccessRates[g.key] - 0.03);
                     }
                 });
-        }, 300);
+                saveState();
+                console.log('🧠 Vellum Learning Engine updated. Total feedback entries:', STATE.learningData.feedback.length);
+            }
 
-        // Console easter egg
-        console.log('%c Vellum %c Fuck Your Cookie Cutter Template.™ ',
-            'background:#e85d3a;color:#fff;padding:10px 14px;font-weight:800;font-size:1.1em;border-radius:4px 0 0 4px;',
-            'background:#0f0f15;color:#c9a96e;padding:10px 14px;font-weight:700;border-radius:0 4px 4px 0;');
-        console.log('%cFirst document free. %cSee you on Whop.',
-            'color:#e85d3a;font-size:1em;font-weight:700;', 'color:#999;');
+            setTimeout(() => {
+                thanks.classList.remove('visible');
+            }, 3000);
+        }
+
+        // ============================================
+        // EMAIL / MAGIC-LINK SIGN-IN
+        // ============================================
+        async function captureEmail() {
+            const emailInput = document.getElementById('emailInput');
+            const email = emailInput.value.trim();
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/send-magic-link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+                if (!res.ok) {
+                    alert('Could not send the magic link right now — please try again shortly.');
+                    return;
+                }
+                document.getElementById('emailForm').style.display = 'none';
+                document.getElementById('emailConfirmation').classList.add('visible');
+            } catch (err) {
+                console.error(err);
+                alert('Network error — check your connection and try again.');
+            }
+        }
+
+        function skipEmail() {
+            document.getElementById('emailCapture').classList.remove('visible');
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function copyDocument() {
+            if (!STATE.currentDocument) return;
+            const text = document.getElementById('outputBody').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.action-btn.primary');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = '#4caf91';
+                btn.style.borderColor = '#4caf91';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'var(--accent)';
+                    btn.style.borderColor = 'var(--accent)';
+                }, 2000);
+            });
+        }
+
+        function downloadDocument() {
+            if (!STATE.currentDocument) return;
+            const blob = new Blob([STATE.currentDocument.content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = STATE.currentDocument.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function truncateText(text, maxLen) {
+            if (text.length <= maxLen) return text;
+            return text.substring(0, maxLen).trimEnd() + '...';
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function updateVaultBadge() {
+            document.getElementById('vaultCount').textContent = STATE.documentVault.length;
+        }
+
+        function setWhopLinks(url) {
+            STATE.whopUrl = url;
+            const cta = document.getElementById('whopCta');
+            if (url) {
+                cta.href = url;
+                cta.target = '_blank';
+                cta.rel = 'noopener';
+            }
+        }
+
+        function updateFreeCount() {
+            const banner = document.getElementById('freeBanner');
+            if (!STATE.user) {
+                banner.innerHTML = '🎉 First document <strong>free</strong>. No credit card. No bullshit. Enter your email below to get started.';
+                return;
+            }
+            if (STATE.user.subscription_active) {
+                banner.innerHTML = '🔥 <strong>Unlimited active.</strong> Generate away, ' + escapeHtml(STATE.user.email) + '.';
+                return;
+            }
+            if (STATE.user.free_docs_remaining > 0) {
+                banner.innerHTML = '🎉 <span class="free-count">' + STATE.user.free_docs_remaining + '</span> free document remaining. No credit card. No bullshit.';
+            } else {
+                banner.innerHTML = '🔒 Free document used. <strong>Go Unlimited</strong> below for unrestricted access.';
+            }
+        }
+
+        // ============================================
+        // VIEW SWITCHING & VAULT (server-backed)
+        // ============================================
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            if (viewName === 'vault') renderVault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderVault() {
+            const vaultList = document.getElementById('vaultList');
+            if (!STATE.token) {
+                vaultList.innerHTML =
+                    '<div class="vault-empty">' +
+                    '<div class="empty-icon">🔑</div>' +
+                    '<p>Sign in with your email to see your Vault.</p>' +
+                    '<button class="action-btn primary" style="margin-top:1rem;" onclick="switchView(\'generator\'); document.getElementById(\'emailCapture\').classList.add(\'visible\');">Sign In →</button>' +
+                    '</div>';
+                return;
+            }
+            if (STATE.documentVault.length === 0) {
+                vaultList.innerHTML =
+                    '<div class="vault-empty">' +
+                    '<div class="empty-icon">📭</div>' +
+                    '<p>No documents yet. Go generate your first masterpiece.</p>' +
+                    '<button class="action-btn primary" style="margin-top:1rem;" onclick="switchView(\'generator\')">Create Document →</button>' +
+                    '</div>';
+                return;
+            }
+            vaultList.innerHTML = STATE.documentVault.map((doc, i) => {
+                const date = new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return '<div class="vault-item" onclick="loadFromVault(' + i + ')">' +
+                    '<div>' +
+                    '<div class="vault-title">' + escapeHtml(doc.title || 'Untitled document') + '</div>' +
+                    '<div class="vault-date">' + date + '</div>' +
+                    '</div>' +
+                    '<span class="sug-arrow">→</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function loadFromVault(index) {
+            const doc = STATE.documentVault[index];
+            if (!doc) return;
+            STATE.currentDocument = {
+                id: doc.id,
+                title: doc.title || 'Untitled document',
+                docType: 'FROM YOUR VAULT',
+                genes: [],
+                content: doc.content,
+                tone: TONE_PROFILES[STATE.selectedTone],
+                toneKey: STATE.selectedTone,
+            };
+            switchView('generator');
+            setTimeout(() => {
+                const outputContainer = document.getElementById('outputContainer');
+                renderDocument(STATE.currentDocument);
+                outputContainer.classList.add('visible');
+                outputContainer.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        async function loadVault() {
+            try {
+                const res = await api('/api/documents');
+                if (!res.ok) return;
+                const j = await res.json();
+                STATE.documentVault = j.documents || [];
+                updateVaultBadge();
+            } catch (err) {
+                console.warn('vault load failed', err);
+            }
+        }
+
+        // ============================================
+        // TONE SELECTOR
+        // ============================================
+        function updateToneButtons() {
+            document.querySelectorAll('.tone-btn').forEach(btn => {
+                btn.className = 'tone-btn';
+                if (btn.dataset.tone === STATE.selectedTone) {
+                    const classMap = {
+                        hellraiser: 'active-fire',
+                        firm: 'active-firm',
+                        direct: 'active-direct',
+                        polite: 'active-polite',
+                        praiser: 'active-praiser',
+                    };
+                    btn.classList.add(classMap[STATE.selectedTone] || 'active-direct');
+                }
+            });
+        }
+
+        document.getElementById('toneSelector').addEventListener('click', (e) => {
+            if (e.target.classList.contains('tone-btn')) {
+                STATE.selectedTone = e.target.dataset.tone;
+                updateToneButtons();
+            }
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        async function init() {
+            updateToneButtons();
+            updateAuthUI();
+            updateVaultBadge();
+            updateFreeCount();
+
+            // Whop purchase link from server config
+            try {
+                const cfg = await (await fetch('/config')).json();
+                if (cfg.WHOP_PRODUCT_URL) setWhopLinks(cfg.WHOP_PRODUCT_URL);
+            } catch (err) {
+                console.warn('config load failed', err);
+            }
+
+            // If signed in, hydrate user + vault from the server
+            if (STATE.token) {
+                try {
+                    const res = await api('/api/me');
+                    if (res.status === 401) {
+                        signOut();
+                    } else if (res.ok) {
+                        const j = await res.json();
+                        STATE.user = j.user;
+                        updateFreeCount();
+                        loadVault();
+                    }
+                } catch (err) {
+                    console.warn('me load failed', err);
+                }
+            } else {
+                document.getElementById('emailCapture').classList.add('visible');
+            }
+
+            console.log('%c Vellum %c F*** Your Cookie Cutter Template.™ ',
+                'background:#e85d3a;color:#fff;padding:10px 14px;font-weight:800;font-size:1.1em;border-radius:4px 0 0 4px;',
+                'background:#0f0f15;color:#c9a96e;padding:10px 14px;font-weight:700;border-radius:0 4px 4px 0;');
+        }
+
+        init();
     </script>
-    <script src="/app.js"></script>
-
 </body>
 </html>

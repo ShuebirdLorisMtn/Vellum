@@ -119,6 +119,29 @@ app.post('/api/magic-consume', async (req, res) => {
   }
 });
 
+// Current user: free docs remaining + subscription state
+app.get('/api/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await db.getUserById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'user not found' });
+    res.json({ user: { email: user.email, free_docs_remaining: user.free_docs_remaining, subscription_active: user.subscription_active } });
+  } catch (err) {
+    console.error('me error', err);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
+// List the user's generated documents (newest first)
+app.get('/api/documents', authMiddleware, async (req, res) => {
+  try {
+    const documents = await db.listDocuments(req.user.userId);
+    res.json({ documents });
+  } catch (err) {
+    console.error('documents error', err);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
 // Generate endpoint: body { prompt, title }
 app.post('/api/generate', authMiddleware, async (req, res) => {
   const { prompt, title } = req.body;
@@ -139,8 +162,12 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
 
     const doc = await db.saveDocument(user.id, title || null, output);
     // consume the free doc only after a successful generation
-    if (usingFreeDoc) await db.decrementFreeDoc(user.id);
-    res.json({ document: doc });
+    let freeDocsRemaining = user.free_docs_remaining;
+    if (usingFreeDoc) {
+      const updated = await db.decrementFreeDoc(user.id);
+      if (updated) freeDocsRemaining = updated.free_docs_remaining;
+    }
+    res.json({ document: doc, free_docs_remaining: freeDocsRemaining, subscription_active: user.subscription_active });
   } catch (err) {
     console.error('generate error', err);
     res.status(500).json({ error: 'server error' });

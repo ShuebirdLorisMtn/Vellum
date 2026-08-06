@@ -85,6 +85,14 @@ async function saveDocument(userId, title, content) {
   return res.rows[0];
 }
 
+async function listDocuments(userId) {
+  const res = await pool.query(
+    `SELECT id, title, content, created_at FROM documents WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+    [userId]
+  );
+  return res.rows;
+}
+
 async function storeWebhookEvent(eventId, payload) {
   if (!eventId) return null;
   await pool.query(`INSERT INTO webhook_events (id, payload) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [eventId, payload]);
@@ -103,6 +111,7 @@ module.exports = {
   getUserById,
   decrementFreeDoc,
   saveDocument,
+  listDocuments,
   storeWebhookEvent,
   setSubscriptionActive,
 };
