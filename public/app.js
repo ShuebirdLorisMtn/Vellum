@@ -1,6 +1,6 @@
 (function(){
   async function $(id){return document.getElementById(id)}
-  const sendBtn = await $('signup');
+  const signupBtn = await $('signup');
   const emailInput = await $('email');
   const appDiv = await $('app');
   const authDiv = await $('auth');
@@ -24,12 +24,14 @@
     return res;
   }
 
-  sendBtn.addEventListener('click', async ()=>{
+  signupBtn.addEventListener('click', async ()=>{
     const email = emailInput.value.trim();
     if (!email){ alert('enter email'); return }
-    const res = await fetch('/api/send-magic-link', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
-    if (!res.ok){ alert('failed to send magic link'); return }
-    alert('Magic link sent — check your email (link valid 30 minutes)');
+    const res = await fetch('/api/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+    if (!res.ok){ alert('signup failed'); return }
+    const j = await res.json();
+    saveToken(j.token);
+    showApp(j.user.email);
   });
 
   function showApp(email){ authDiv.style.display='none'; appDiv.style.display='block'; who.textContent = email }
@@ -58,7 +60,9 @@
   (async ()=>{
     const token = loadToken();
     if (!token) return showAuth();
+    // try to get user info by calling /health or using token payload
     try{
+      // token contains email in our JWT payload in this minimal impl
       const parts = token.split('.');
       if (parts.length===3){
         const payload = JSON.parse(atob(parts[1]));

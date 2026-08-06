@@ -1,5 +1,3 @@
-node_modules/
+# Minimal .gitignore
+node_modules
 .env
-*.log
-.netlify/
-deno.lock
