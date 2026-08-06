@@ -897,7 +897,7 @@
 
             <!-- Free banner -->
             <div class="free-banner" id="freeBanner">
-                🎉 <span class="free-count" id="freeCount">1</span> free document remaining. No credit card. No bullshit.
+                🎉 <span class="free-count" id="freeCount">3</span> free documents. No credit card. No bullshit.
             </div>
 
             <!-- Tone Selector -->
@@ -954,6 +954,7 @@
                     <button class="action-btn primary" onclick="copyDocument()">📋 Copy</button>
                     <button class="action-btn" onclick="regenerateDocument()">🔄 Regenerate</button>
                     <button class="action-btn" onclick="downloadDocument()">💾 Download .md</button>
+                    <button class="action-btn" id="shareBtn" onclick="shareDocument()">🔗 Share</button>
                 </div>
             </div>
 
@@ -979,10 +980,14 @@
 
             <!-- CTA Section -->
             <div class="email-capture visible" id="ctaSection" style="margin-top: 2rem;">
-                <h3>🔥 Go Unlimited — $29/month</h3>
+                <h3>🔥 Go Unlimited</h3>
                 <p>Unlimited documents. All tones. Full Vault access. Priority gene improvements. Cancel anytime.</p>
-                <a href="#" class="nav-cta" id="whopCta" style="display:inline-block;padding:0.8rem 2rem;font-size:1rem;">Get Vellum Unlimited →</a>
-                <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem;">Available on Whop. Secure payment. Instant access.</p>
+                <div style="display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;">
+                    <a href="#" class="nav-cta" id="stripeMonthly" style="display:none;padding:0.8rem 2rem;font-size:1rem;" onclick="startCheckout('monthly'); return false;">$29 / month →</a>
+                    <a href="#" class="nav-cta" id="stripeYearly" style="display:none;padding:0.8rem 2rem;font-size:1rem;background:var(--accent);color:#0a0a0a;" onclick="startCheckout('yearly'); return false;">$199 / year →</a>
+                    <a href="#" class="nav-cta" id="whopCta" style="display:none;padding:0.8rem 2rem;font-size:1rem;">Get it on Whop →</a>
+                </div>
+                <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem;">Secure payment. Instant access. Cancel anytime.</p>
             </div>
         </div>
 
@@ -1009,93 +1014,177 @@
         </footer>
     </div>
 
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script>
+
         // ============================================
         // STATE MANAGEMENT
         // ============================================
         const STATE = {
-            token: localStorage.getItem('vellum_token') || null,
-            user: null, // { email, free_docs_remaining, subscription_active } from /api/me
+            client: null,           // Supabase client
+            session: null,          // Supabase auth session
+            profile: null,          // { email, free_docs_remaining, subscription_active, docs_generated, voiceprint }
             whopUrl: '',
+            stripeEnabled: false,
             selectedTone: 'hellraiser',
-            documentVault: [], // server-side documents when signed in
-            learningData: JSON.parse(localStorage.getItem('vellum_learning') || '{"feedback":[], "tonePreferences":{}, "geneSuccessRates":{}}'),
+            documentVault: [],      // documents from Supabase, kept in sync in real time
+            geneWeights: { mirror: 1, rosetta: 1, arbiter: 1, catalyst: 1, magna: 1 }, // global, from gene_weights table
             currentDocument: null,
             feedbackSubmitted: false,
+            realtimeChannel: null,
         };
 
-        function saveState() {
-            localStorage.setItem('vellum_learning', JSON.stringify(STATE.learningData));
-        }
-
         // ============================================
-        // API HELPERS
+        // SUPABASE CLIENT + AUTH
         // ============================================
-        async function api(path, opts = {}) {
-            const headers = opts.headers || {};
-            headers['Content-Type'] = headers['Content-Type'] || 'application/json';
-            if (STATE.token) headers['Authorization'] = 'Bearer ' + STATE.token;
-            return fetch(path, { ...opts, headers });
-        }
+        async function initSupabase() {
+            const cfg = await (await fetch('/config')).json();
+            STATE.whopUrl = cfg.WHOP_PRODUCT_URL || '';
+            STATE.stripeEnabled = !!cfg.STRIPE_ENABLED;
+            if (STATE.whopUrl) {
+                const whop = document.getElementById('whopCta');
+                whop.href = STATE.whopUrl;
+                whop.target = '_blank';
+                whop.rel = 'noopener';
+                whop.style.display = 'inline-block';
+            }
+            if (STATE.stripeEnabled) {
+                document.getElementById('stripeMonthly').style.display = 'inline-block';
+                document.getElementById('stripeYearly').style.display = 'inline-block';
+            }
+            if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) {
+                console.warn('Supabase is not configured on this deployment yet.');
+                return;
+            }
+            STATE.client = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
 
-        function signOut() {
-            localStorage.removeItem('vellum_token');
-            STATE.token = null;
-            STATE.user = null;
-            STATE.documentVault = [];
+            const { data: { session } } = await STATE.client.auth.getSession();
+            STATE.session = session;
+
+            STATE.client.auth.onAuthStateChange((event, session) => {
+                STATE.session = session;
+                updateAuthUI();
+                if (session) {
+                    onSignedIn();
+                } else {
+                    onSignedOut();
+                }
+            });
+
+            if (session) {
+                await onSignedIn();
+            } else {
+                document.getElementById('emailCapture').classList.add('visible');
+            }
             updateAuthUI();
+        }
+
+        async function onSignedIn() {
+            document.getElementById('emailCapture').classList.remove('visible');
+            document.getElementById('emailForm').style.display = 'block';
+            document.getElementById('emailConfirmation').classList.remove('visible');
+            await loadProfile();
+            await loadVault();
+            subscribeRealtime();
+            loadGeneWeights();
+        }
+
+        function onSignedOut() {
+            STATE.profile = null;
+            STATE.documentVault = [];
+            if (STATE.realtimeChannel) {
+                STATE.client.removeChannel(STATE.realtimeChannel);
+                STATE.realtimeChannel = null;
+            }
             updateVaultBadge();
             updateFreeCount();
+        }
+
+        async function signOut() {
+            if (STATE.client) await STATE.client.auth.signOut();
             switchView('generator');
         }
 
         function updateAuthUI() {
-            document.getElementById('signoutLink').style.display = STATE.token ? 'inline' : 'none';
+            document.getElementById('signoutLink').style.display = STATE.session ? 'inline' : 'none';
+        }
+
+        async function loadProfile() {
+            if (!STATE.client || !STATE.session) return;
+            const { data, error } = await STATE.client
+                .from('profiles')
+                .select('email, free_docs_remaining, subscription_active, docs_generated, voiceprint')
+                .eq('id', STATE.session.user.id)
+                .maybeSingle();
+            if (!error && data) {
+                STATE.profile = data;
+                updateFreeCount();
+            }
         }
 
         // ============================================
-        // GENE SYSTEM (cosmetic + learning signal)
+        // REAL-TIME SYNC ACROSS DEVICES
+        // ============================================
+        function subscribeRealtime() {
+            if (!STATE.client || !STATE.session) return;
+            if (STATE.realtimeChannel) STATE.client.removeChannel(STATE.realtimeChannel);
+            STATE.realtimeChannel = STATE.client
+                .channel('vellum-documents-' + STATE.session.user.id)
+                .on('postgres_changes', {
+                    event: 'INSERT', schema: 'public', table: 'documents',
+                    filter: 'user_id=eq.' + STATE.session.user.id,
+                }, (payload) => {
+                    // Avoid duplicating the doc this tab just inserted itself.
+                    if (STATE.documentVault.some(d => d.id === payload.new.id)) return;
+                    STATE.documentVault.unshift(payload.new);
+                    updateVaultBadge();
+                })
+                .subscribe();
+        }
+
+        async function loadGeneWeights() {
+            if (!STATE.client) return;
+            const { data, error } = await STATE.client.from('gene_weights').select('gene, weight');
+            if (!error && data) {
+                data.forEach(row => { STATE.geneWeights[row.gene] = row.weight; });
+            }
+        }
+
+        // ============================================
+        // EVENT TRACKING (copy rate, download rate, regenerate rate, generate)
+        // ============================================
+        function trackEvent(eventType, documentId) {
+            if (!STATE.client || !STATE.session) return;
+            STATE.client.from('events').insert({
+                user_id: STATE.session.user.id,
+                document_id: documentId || (STATE.currentDocument && STATE.currentDocument.id) || null,
+                event_type: eventType,
+            }).then(() => {}, (err) => console.warn('event track failed', err));
+        }
+
+        // ============================================
+        // GENE SYSTEM (weighted by the global learning flywheel)
         // ============================================
         const GENE_LIBRARY = {
             mirror: {
-                name: 'Mirror',
-                cssClass: 'gene-mirror',
-                triggers: ['blame', 'frustrated', 'tired of', 'stop', 'sick of', 'blaming', 'conflict', 'tension',
-                    'misunderstood', 'pissed'
-                ],
-                weight: 1.0,
+                name: 'Mirror', cssClass: 'gene-mirror',
+                triggers: ['blame', 'frustrated', 'tired of', 'stop', 'sick of', 'blaming', 'conflict', 'tension', 'misunderstood', 'pissed'],
             },
             rosetta: {
-                name: 'Rosetta Stone',
-                cssClass: 'gene-rosetta',
-                triggers: ['explain', 'justify', 'prove', 'value', 'roi', 'business', 'technical', 'non-technical',
-                    'board', 'investor', 'translate', 'bridge'
-                ],
-                weight: 1.0,
+                name: 'Rosetta Stone', cssClass: 'gene-rosetta',
+                triggers: ['explain', 'justify', 'prove', 'value', 'roi', 'business', 'technical', 'non-technical', 'board', 'investor', 'translate', 'bridge'],
             },
             arbiter: {
-                name: 'Arbiter',
-                cssClass: 'gene-arbiter',
-                triggers: ['disagree', 'disagreement', 'conflict', 'both sides', 'compromise', 'resolution', 'decide',
-                    'decision', 'stuck', 'impasse', 'blame'
-                ],
-                weight: 1.0,
+                name: 'Arbiter', cssClass: 'gene-arbiter',
+                triggers: ['disagree', 'disagreement', 'conflict', 'both sides', 'compromise', 'resolution', 'decide', 'decision', 'stuck', 'impasse', 'blame'],
             },
             catalyst: {
-                name: 'Catalyst',
-                cssClass: 'gene-catalyst',
-                triggers: ['start', 'launch', 'action', 'momentum', 'kickoff', 'motivate', 'inspire', 'move forward',
-                    'quick win', 'first step', 'now', 'immediate'
-                ],
-                weight: 1.0,
+                name: 'Catalyst', cssClass: 'gene-catalyst',
+                triggers: ['start', 'launch', 'action', 'momentum', 'kickoff', 'motivate', 'inspire', 'move forward', 'quick win', 'first step', 'now', 'immediate'],
             },
             magna: {
-                name: 'Magna Carta',
-                cssClass: 'gene-magna',
-                triggers: ['charter', 'principles', 'rules', 'foundation', 'guidelines', 'rights', 'responsibilities',
-                    'framework', 'system', 'process', 'policy', 'standard'
-                ],
-                weight: 1.0,
+                name: 'Magna Carta', cssClass: 'gene-magna',
+                triggers: ['charter', 'principles', 'rules', 'foundation', 'guidelines', 'rights', 'responsibilities', 'framework', 'system', 'process', 'policy', 'standard'],
             },
         };
 
@@ -1103,8 +1192,8 @@
             const combined = (issue + ' ' + outcome).toLowerCase();
             const scored = Object.entries(GENE_LIBRARY).map(([key, gene]) => {
                 const baseScore = gene.triggers.filter(kw => combined.includes(kw)).length;
-                const learnedWeight = STATE.learningData.geneSuccessRates[key] || 1.0;
-                return { key, ...gene, score: baseScore * learnedWeight * gene.weight };
+                const globalWeight = STATE.geneWeights[key] || 1.0;
+                return { key, ...gene, score: baseScore * globalWeight };
             });
             scored.sort((a, b) => b.score - a.score);
             return scored.slice(0, 3);
@@ -1115,10 +1204,7 @@
         // ============================================
         const TONE_PROFILES = {
             hellraiser: {
-                name: 'Hellraiser',
-                cssClass: 'fire',
-                emoji: '🔥',
-                docType: 'DIRECTIVE',
+                name: 'Hellraiser', cssClass: 'fire', emoji: '🔥', docType: 'DIRECTIVE',
                 directive: 'Maximum intensity. Blunt, confrontational, zero hedging, zero corporate softening. Scorched-earth energy — but sharp and controlled enough that the author could actually send it.',
                 suggestedNext: [
                     'Follow-up: Individual accountability emails for each team member',
@@ -1127,10 +1213,7 @@
                 ],
             },
             firm: {
-                name: 'Firm',
-                cssClass: 'gold',
-                emoji: '⚡',
-                docType: 'STRATEGIC FRAMEWORK',
+                name: 'Firm', cssClass: 'gold', emoji: '⚡', docType: 'STRATEGIC FRAMEWORK',
                 directive: 'Serious and unambiguous. Clear expectations, defined consequences, professional but immovable. No aggression, no apology.',
                 suggestedNext: [
                     'The detailed action plan with milestones',
@@ -1139,10 +1222,7 @@
                 ],
             },
             direct: {
-                name: 'Direct',
-                cssClass: 'gold',
-                emoji: '🎯',
-                docType: 'STRATEGIC FRAMEWORK',
+                name: 'Direct', cssClass: 'gold', emoji: '🎯', docType: 'STRATEGIC FRAMEWORK',
                 directive: 'Plain, efficient, and neutral. Say exactly what needs to happen and why, without emotional coloring in either direction.',
                 suggestedNext: [
                     'The executive summary for leadership',
@@ -1151,10 +1231,7 @@
                 ],
             },
             polite: {
-                name: 'Polite',
-                cssClass: 'ice',
-                emoji: '🤝',
-                docType: 'STRATEGIC FRAMEWORK',
+                name: 'Polite', cssClass: 'ice', emoji: '🤝', docType: 'STRATEGIC FRAMEWORK',
                 directive: 'Courteous, constructive, and collaborative. Acknowledge the other side, preserve the relationship, and still move the outcome forward.',
                 suggestedNext: [
                     'The gracious follow-up thank-you note',
@@ -1163,10 +1240,7 @@
                 ],
             },
             praiser: {
-                name: 'Praiser',
-                cssClass: 'ice',
-                emoji: '❄️',
-                docType: 'APPRECIATION',
+                name: 'Praiser', cssClass: 'ice', emoji: '❄️', docType: 'APPRECIATION',
                 directive: 'Warm, generous, specific praise. Celebrate genuinely — concrete accomplishments, real impact, heartfelt gratitude. No backhanded notes.',
                 suggestedNext: [
                     'Public recognition: LinkedIn recommendation draft',
@@ -1210,7 +1284,7 @@
                 return;
             }
 
-            if (!STATE.token) {
+            if (!STATE.session) {
                 const emailCapture = document.getElementById('emailCapture');
                 emailCapture.classList.add('visible');
                 emailCapture.scrollIntoView({ behavior: 'smooth' });
@@ -1246,11 +1320,16 @@
             const tone = STATE.selectedTone;
             const title = buildTitle(desiredOutcome, tone);
             const prompt = buildPrompt(nameOccupation, issueTopic, desiredOutcome, tone);
+            const genes = detectGenes(issueTopic, desiredOutcome);
 
             try {
-                const res = await api('/api/generate', {
+                const res = await fetch('/api/generate', {
                     method: 'POST',
-                    body: JSON.stringify({ prompt, title }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + STATE.session.access_token,
+                    },
+                    body: JSON.stringify({ prompt, title, tone, genes: genes.map(g => g.key) }),
                 });
 
                 clearInterval(msgInterval);
@@ -1258,18 +1337,17 @@
                 generateBtn.disabled = false;
 
                 if (res.status === 401) {
-                    signOut();
+                    await STATE.client.auth.signOut();
                     const emailCapture = document.getElementById('emailCapture');
                     emailCapture.classList.add('visible');
                     emailCapture.scrollIntoView({ behavior: 'smooth' });
-                    alert('Your session expired. Enter your email for a fresh magic link.');
+                    alert('Your session expired. Sign in again to keep going.');
                     return;
                 }
 
                 if (res.status === 402) {
                     const j = await res.json().catch(() => ({}));
-                    if (j.purchase_url) setWhopLinks(j.purchase_url);
-                    if (STATE.user) STATE.user.free_docs_remaining = 0;
+                    if (STATE.profile) STATE.profile.free_docs_remaining = 0;
                     updateFreeCount();
                     document.getElementById('ctaSection').scrollIntoView({ behavior: 'smooth' });
                     return;
@@ -1281,18 +1359,22 @@
                 }
 
                 const j = await res.json();
-                if (typeof j.free_docs_remaining === 'number' && STATE.user) {
-                    STATE.user.free_docs_remaining = j.free_docs_remaining;
+                if (STATE.profile) {
+                    STATE.profile.free_docs_remaining = j.free_docs_remaining;
+                    STATE.profile.subscription_active = j.subscription_active;
+                    STATE.profile.docs_generated = j.docs_generated;
                 }
 
                 STATE.currentDocument = {
                     id: j.document.id,
                     title: j.document.title || title,
                     docType: TONE_PROFILES[tone].docType,
-                    genes: detectGenes(issueTopic, desiredOutcome),
+                    genes,
                     content: j.document.content,
                     tone: TONE_PROFILES[tone],
                     toneKey: tone,
+                    share_id: j.document.share_id,
+                    share_enabled: j.document.share_enabled,
                 };
                 STATE.documentVault.unshift({
                     id: j.document.id,
@@ -1301,6 +1383,7 @@
                     created_at: j.document.created_at || new Date().toISOString(),
                 });
 
+                trackEvent('generate', j.document.id);
                 renderDocument(STATE.currentDocument);
                 updateVaultBadge();
                 updateFreeCount();
@@ -1312,6 +1395,7 @@
 
                 document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('voted'));
                 document.getElementById('feedbackThanks').classList.remove('visible');
+                document.getElementById('shareBtn').textContent = '🔗 Share';
             } catch (err) {
                 clearInterval(msgInterval);
                 loadingOverlay.classList.remove('visible');
@@ -1361,7 +1445,7 @@
             toneBadge.className = 'tone-badge ' + data.tone.cssClass;
 
             const geneIndicators = document.getElementById('geneIndicators');
-            geneIndicators.innerHTML = data.genes.map(g =>
+            geneIndicators.innerHTML = (data.genes || []).map(g =>
                 '<span class="gene-tag ' + g.cssClass + '">' + g.name + '</span>'
             ).join('');
 
@@ -1389,6 +1473,7 @@
         }
 
         function regenerateDocument() {
+            trackEvent('regenerate');
             document.getElementById('outputContainer').classList.remove('visible');
             document.getElementById('suggestedNext').classList.remove('visible');
             STATE.feedbackSubmitted = false;
@@ -1398,10 +1483,11 @@
         }
 
         // ============================================
-        // LEARNING ENGINE — FEEDBACK SYSTEM
+        // LEARNING ENGINE — FEEDBACK (writes to Supabase, updates global weights)
         // ============================================
-        function submitFeedback(type) {
+        async function submitFeedback(type) {
             if (STATE.feedbackSubmitted) return;
+            if (!STATE.client || !STATE.session || !STATE.currentDocument) return;
             STATE.feedbackSubmitted = true;
 
             const thumbsUp = document.querySelector('.feedback-btn.thumbs-up');
@@ -1418,33 +1504,18 @@
             thanks.classList.add('visible');
 
             const doc = STATE.currentDocument;
-            if (doc) {
-                STATE.learningData.feedback.push({
-                    timestamp: Date.now(),
-                    tone: doc.toneKey,
-                    genes: doc.genes.map(g => g.key),
-                    rating: type,
-                    issueKeywords: document.getElementById('issueTopic').value.toLowerCase().split(' '),
+            try {
+                const { error } = await STATE.client.rpc('record_feedback', {
+                    p_document_id: doc.id,
+                    p_rating: type,
+                    p_tone: doc.toneKey,
+                    p_genes: doc.genes.map(g => g.key),
                 });
-                if (STATE.learningData.feedback.length > 200) {
-                    STATE.learningData.feedback = STATE.learningData.feedback.slice(-200);
-                }
-                if (!STATE.learningData.tonePreferences[doc.toneKey]) {
-                    STATE.learningData.tonePreferences[doc.toneKey] = { up: 0, down: 0 };
-                }
-                STATE.learningData.tonePreferences[doc.toneKey][type]++;
-                doc.genes.forEach(g => {
-                    if (!STATE.learningData.geneSuccessRates[g.key]) {
-                        STATE.learningData.geneSuccessRates[g.key] = 1.0;
-                    }
-                    if (type === 'up') {
-                        STATE.learningData.geneSuccessRates[g.key] = Math.min(2.0, STATE.learningData.geneSuccessRates[g.key] + 0.05);
-                    } else {
-                        STATE.learningData.geneSuccessRates[g.key] = Math.max(0.5, STATE.learningData.geneSuccessRates[g.key] - 0.03);
-                    }
-                });
-                saveState();
-                console.log('🧠 Vellum Learning Engine updated. Total feedback entries:', STATE.learningData.feedback.length);
+                if (error) throw error;
+                // Global weights just shifted — refresh so the next detectGenes() call uses them.
+                loadGeneWeights();
+            } catch (err) {
+                console.warn('feedback failed', err);
             }
 
             setTimeout(() => {
@@ -1453,7 +1524,35 @@
         }
 
         // ============================================
-        // EMAIL / MAGIC-LINK SIGN-IN
+        // SHARE LINKS (viral loop)
+        // ============================================
+        async function shareDocument() {
+            if (!STATE.client || !STATE.session || !STATE.currentDocument) return;
+            const doc = STATE.currentDocument;
+            const btn = document.getElementById('shareBtn');
+            try {
+                if (!doc.share_enabled) {
+                    const { error } = await STATE.client
+                        .from('documents')
+                        .update({ share_enabled: true })
+                        .eq('id', doc.id);
+                    if (error) throw error;
+                    doc.share_enabled = true;
+                    trackEvent('share_created', doc.id);
+                }
+                const url = location.origin + '/s/' + doc.share_id;
+                await navigator.clipboard.writeText(url);
+                const original = btn.textContent;
+                btn.textContent = '✅ Link copied!';
+                setTimeout(() => { btn.textContent = original; }, 2000);
+            } catch (err) {
+                console.error(err);
+                alert('Could not create the share link — try again in a moment.');
+            }
+        }
+
+        // ============================================
+        // EMAIL / MAGIC-LINK SIGN-IN (Supabase Auth)
         // ============================================
         async function captureEmail() {
             const emailInput = document.getElementById('emailInput');
@@ -1462,13 +1561,16 @@
                 alert('Please enter a valid email address.');
                 return;
             }
+            if (!STATE.client) {
+                alert('Sign-in is not available on this deployment yet.');
+                return;
+            }
             try {
-                const res = await fetch('/api/send-magic-link', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email }),
+                const { error } = await STATE.client.auth.signInWithOtp({
+                    email,
+                    options: { emailRedirectTo: location.origin },
                 });
-                if (!res.ok) {
+                if (error) {
                     alert('Could not send the magic link right now — please try again shortly.');
                     return;
                 }
@@ -1485,12 +1587,43 @@
         }
 
         // ============================================
+        // STRIPE CHECKOUT
+        // ============================================
+        async function startCheckout(plan) {
+            if (!STATE.session) {
+                document.getElementById('emailCapture').classList.add('visible');
+                document.getElementById('emailCapture').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            try {
+                const res = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + STATE.session.access_token,
+                    },
+                    body: JSON.stringify({ plan }),
+                });
+                if (!res.ok) {
+                    alert('Checkout is not available right now — try Whop instead, or check back shortly.');
+                    return;
+                }
+                const j = await res.json();
+                if (j.url) window.location.href = j.url;
+            } catch (err) {
+                console.error(err);
+                alert('Network error — check your connection and try again.');
+            }
+        }
+
+        // ============================================
         // UTILITY FUNCTIONS
         // ============================================
         function copyDocument() {
             if (!STATE.currentDocument) return;
             const text = document.getElementById('outputBody').innerText;
             navigator.clipboard.writeText(text).then(() => {
+                trackEvent('copy');
                 const btn = document.querySelector('.action-btn.primary');
                 const originalText = btn.textContent;
                 btn.textContent = '✅ Copied!';
@@ -1506,6 +1639,7 @@
 
         function downloadDocument() {
             if (!STATE.currentDocument) return;
+            trackEvent('download');
             const blob = new Blob([STATE.currentDocument.content], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1534,35 +1668,26 @@
             document.getElementById('vaultCount').textContent = STATE.documentVault.length;
         }
 
-        function setWhopLinks(url) {
-            STATE.whopUrl = url;
-            const cta = document.getElementById('whopCta');
-            if (url) {
-                cta.href = url;
-                cta.target = '_blank';
-                cta.rel = 'noopener';
-            }
-        }
-
         function updateFreeCount() {
             const banner = document.getElementById('freeBanner');
-            if (!STATE.user) {
-                banner.innerHTML = '🎉 First document <strong>free</strong>. No credit card. No bullshit. Enter your email below to get started.';
+            if (!STATE.session) {
+                banner.innerHTML = '🎉 First <strong>3 documents free</strong>. No credit card. No bullshit. Enter your email below to get started.';
                 return;
             }
-            if (STATE.user.subscription_active) {
-                banner.innerHTML = '🔥 <strong>Unlimited active.</strong> Generate away, ' + escapeHtml(STATE.user.email) + '.';
+            if (!STATE.profile) return;
+            if (STATE.profile.subscription_active) {
+                banner.innerHTML = '🔥 <strong>Unlimited active.</strong> Generate away, ' + escapeHtml(STATE.profile.email) + '.';
                 return;
             }
-            if (STATE.user.free_docs_remaining > 0) {
-                banner.innerHTML = '🎉 <span class="free-count">' + STATE.user.free_docs_remaining + '</span> free document remaining. No credit card. No bullshit.';
+            if (STATE.profile.free_docs_remaining > 0) {
+                banner.innerHTML = '🎉 <span class="free-count">' + STATE.profile.free_docs_remaining + '</span> free document' + (STATE.profile.free_docs_remaining === 1 ? '' : 's') + ' remaining. No credit card. No bullshit.';
             } else {
-                banner.innerHTML = '🔒 Free document used. <strong>Go Unlimited</strong> below for unrestricted access.';
+                banner.innerHTML = '🔒 Free documents used. <strong>Go Unlimited</strong> below for unrestricted access.';
             }
         }
 
         // ============================================
-        // VIEW SWITCHING & VAULT (server-backed)
+        // VIEW SWITCHING & VAULT (Supabase-backed, real-time)
         // ============================================
         function switchView(viewName) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1573,7 +1698,7 @@
 
         function renderVault() {
             const vaultList = document.getElementById('vaultList');
-            if (!STATE.token) {
+            if (!STATE.session) {
                 vaultList.innerHTML =
                     '<div class="vault-empty">' +
                     '<div class="empty-icon">🔑</div>' +
@@ -1612,25 +1737,33 @@
                 docType: 'FROM YOUR VAULT',
                 genes: [],
                 content: doc.content,
-                tone: TONE_PROFILES[STATE.selectedTone],
-                toneKey: STATE.selectedTone,
+                tone: TONE_PROFILES[doc.tone] || TONE_PROFILES[STATE.selectedTone],
+                toneKey: doc.tone || STATE.selectedTone,
+                share_id: doc.share_id,
+                share_enabled: doc.share_enabled,
             };
             switchView('generator');
             setTimeout(() => {
                 const outputContainer = document.getElementById('outputContainer');
                 renderDocument(STATE.currentDocument);
                 outputContainer.classList.add('visible');
+                document.getElementById('shareBtn').textContent = STATE.currentDocument.share_enabled ? '🔗 Copy link' : '🔗 Share';
                 outputContainer.scrollIntoView({ behavior: 'smooth' });
             }, 300);
         }
 
         async function loadVault() {
+            if (!STATE.client || !STATE.session) return;
             try {
-                const res = await api('/api/documents');
-                if (!res.ok) return;
-                const j = await res.json();
-                STATE.documentVault = j.documents || [];
-                updateVaultBadge();
+                const { data, error } = await STATE.client
+                    .from('documents')
+                    .select('id, title, content, tone, genes, share_id, share_enabled, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                if (!error && data) {
+                    STATE.documentVault = data;
+                    updateVaultBadge();
+                }
             } catch (err) {
                 console.warn('vault load failed', err);
             }
@@ -1644,11 +1777,8 @@
                 btn.className = 'tone-btn';
                 if (btn.dataset.tone === STATE.selectedTone) {
                     const classMap = {
-                        hellraiser: 'active-fire',
-                        firm: 'active-firm',
-                        direct: 'active-direct',
-                        polite: 'active-polite',
-                        praiser: 'active-praiser',
+                        hellraiser: 'active-fire', firm: 'active-firm', direct: 'active-direct',
+                        polite: 'active-polite', praiser: 'active-praiser',
                     };
                     btn.classList.add(classMap[STATE.selectedTone] || 'active-direct');
                 }
@@ -1670,33 +1800,7 @@
             updateAuthUI();
             updateVaultBadge();
             updateFreeCount();
-
-            // Whop purchase link from server config
-            try {
-                const cfg = await (await fetch('/config')).json();
-                if (cfg.WHOP_PRODUCT_URL) setWhopLinks(cfg.WHOP_PRODUCT_URL);
-            } catch (err) {
-                console.warn('config load failed', err);
-            }
-
-            // If signed in, hydrate user + vault from the server
-            if (STATE.token) {
-                try {
-                    const res = await api('/api/me');
-                    if (res.status === 401) {
-                        signOut();
-                    } else if (res.ok) {
-                        const j = await res.json();
-                        STATE.user = j.user;
-                        updateFreeCount();
-                        loadVault();
-                    }
-                } catch (err) {
-                    console.warn('me load failed', err);
-                }
-            } else {
-                document.getElementById('emailCapture').classList.add('visible');
-            }
+            await initSupabase();
 
             console.log('%c Vellum %c F*** Your Cookie Cutter Template.™ ',
                 'background:#e85d3a;color:#fff;padding:10px 14px;font-weight:800;font-size:1.1em;border-radius:4px 0 0 4px;',
@@ -1704,6 +1808,7 @@
         }
 
         init();
-    </script>
+
+        </script>
 </body>
 </html>

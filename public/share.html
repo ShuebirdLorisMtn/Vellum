@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Shared document — Vellum</title>
+    <style>
+        :root {
+            --bg: #07070a; --surface: #0f0f15; --border: #22222e;
+            --text: #e8e8ed; --text-secondary: #a0a0b0; --text-muted: #6b6b7c;
+            --accent: #c9a96e; --accent-fire: #e85d3a; --radius: 10px; --radius-xl: 20px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.7;
+        }
+        .wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            font-weight: 800; font-size: 0.8rem; letter-spacing: 0.05em;
+            color: var(--accent); text-decoration: none; margin-bottom: 2rem;
+        }
+        .badge .mark {
+            width: 24px; height: 24px; border-radius: 6px;
+            background: linear-gradient(135deg, #c9a96e, #8b7335);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: #0a0a0a; font-weight: 900;
+        }
+        .doc {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-xl); padding: 2rem 1.8rem;
+        }
+        .doc h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem; letter-spacing: -0.02em; }
+        .doc h2 { font-size: 1.1rem; font-weight: 700; margin-top: 1.8rem; margin-bottom: 0.5rem; color: var(--accent); }
+        .doc h3 { font-size: 0.95rem; font-weight: 600; margin-top: 1.3rem; margin-bottom: 0.4rem; }
+        .doc strong { color: #fff; }
+        .doc em { color: var(--accent); font-style: normal; }
+        .doc ul { margin: 0.4rem 0 0.4rem 1.4rem; }
+        .doc-body { white-space: pre-wrap; font-size: 0.92rem; }
+        .cta {
+            margin-top: 2rem; text-align: center; padding: 1.8rem;
+            background: linear-gradient(135deg, rgba(201,169,110,0.08), rgba(232,93,58,0.05));
+            border: 1px solid rgba(201,169,110,0.25); border-radius: var(--radius-xl);
+        }
+        .cta p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; }
+        .cta a {
+            display: inline-block; padding: 0.8rem 1.8rem; background: var(--accent-fire);
+            color: #fff; border-radius: 8px; font-weight: 700; text-decoration: none;
+        }
+        .loading, .error { text-align: center; padding: 4rem 0; color: var(--text-muted); }
+        .made-with {
+            margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);
+            font-size: 0.75rem; color: var(--text-muted); text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <a href="/" class="badge"><span class="mark">V</span> Made with Vellum</a>
+        <div id="content" class="loading">Loading document…</div>
+    </div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script>
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        function inlineMd(s) {
+            return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        }
+        function renderMarkdown(md) {
+            const esc = escapeHtml(md);
+            const lines = esc.split('\n');
+            const out = [];
+            let inList = false;
+            for (const line of lines) {
+                if (/^\s*[-*] /.test(line)) {
+                    if (!inList) { out.push('<ul>'); inList = true; }
+                    out.push('<li>' + inlineMd(line.replace(/^\s*[-*] /, '')) + '</li>');
+                    continue;
+                }
+                if (inList) { out.push('</ul>'); inList = false; }
+                if (/^### /.test(line)) out.push('<h3>' + inlineMd(line.slice(4)) + '</h3>');
+                else if (/^## /.test(line)) out.push('<h2>' + inlineMd(line.slice(3)) + '</h2>');
+                else if (/^# /.test(line)) out.push('<h1>' + inlineMd(line.slice(2)) + '</h1>');
+                else if (/^---+\s*$/.test(line)) out.push('<hr style="border:none;border-top:1px solid var(--border);margin:1.2rem 0;">');
+                else out.push(inlineMd(line));
+            }
+            if (inList) out.push('</ul>');
+            return out.join('\n');
+        }
+
+        (async () => {
+            const shareId = location.pathname.replace(/^\/s\//, '').split('/')[0];
+            const content = document.getElementById('content');
+            if (!shareId) {
+                content.className = 'error';
+                content.textContent = 'No document specified.';
+                return;
+            }
+            try {
+                const cfg = await (await fetch('/config')).json();
+                if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) {
+                    content.className = 'error';
+                    content.textContent = 'This deployment is not configured yet.';
+                    return;
+                }
+                const client = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+                const { data, error } = await client
+                    .from('documents')
+                    .select('id, title, content, created_at')
+                    .eq('share_id', shareId)
+                    .eq('share_enabled', true)
+                    .maybeSingle();
+
+                if (error || !data) {
+                    content.className = 'error';
+                    content.textContent = 'This document is private or no longer available.';
+                    return;
+                }
+
+                // Best-effort anonymous view tracking — never block rendering on this.
+                client.from('events').insert({ document_id: data.id, event_type: 'share_view' }).then(() => {}, () => {});
+
+                content.className = '';
+                content.innerHTML =
+                    '<div class="doc"><div class="doc-body">' + renderMarkdown(data.content) + '</div></div>' +
+                    '<div class="cta">' +
+                    '<p>This document was architected by Vellum in three questions.</p>' +
+                    '<a href="/">Create your own free document →</a>' +
+                    '</div>' +
+                    '<div class="made-with">Vellum — Cognitive Document Architecture™</div>';
+            } catch (err) {
+                console.error(err);
+                content.className = 'error';
+                content.textContent = 'Something went wrong loading this document.';
+            }
+        })();
+    </script>
+</body>
+</html>

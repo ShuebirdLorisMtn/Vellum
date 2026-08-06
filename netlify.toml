@@ -7,7 +7,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["pg", "express", "serverless-http", "@sendgrid/mail", "jsonwebtoken", "@anthropic-ai/sdk", "dotenv"]
+  external_node_modules = ["express", "serverless-http", "@supabase/supabase-js", "stripe", "@anthropic-ai/sdk", "dotenv"]
 
 [[redirects]]
   force = true
@@ -31,4 +31,10 @@
   force = true
   from = "/health"
   to = "/.netlify/functions/api"
+  status = 200
+
+# Shared read-only document links (viral loop) — client-side rendered.
+[[redirects]]
+  from = "/s/*"
+  to = "/share.html"
   status = 200
