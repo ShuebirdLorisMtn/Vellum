@@ -42,7 +42,14 @@ async function saveDocument(userId, title, content) {
 }
 
 async function storeWebhookEvent(eventId, payload) {
-  await pool.query(`INSERT INTO webhook_events (event_id, payload) VALUES ($1, $2) ON CONFLICT (event_id) DO NOTHING`, [eventId, payload]);
+  if (!eventId) return null;
+  await pool.query(`INSERT INTO webhook_events (id, payload) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [eventId, payload]);
+  return eventId;
+}
+
+async function setSubscriptionActive(userId, active = true) {
+  const res = await pool.query(`UPDATE users SET subscription_active = $2 WHERE id = $1 RETURNING id, email, subscription_active`, [userId, active]);
+  return res.rows[0] || null;
 }
 
 module.exports = {
@@ -54,4 +61,7 @@ module.exports = {
   setSubscriptionActive,
   saveDocument,
   storeWebhookEvent
+  saveDocument,
+  storeWebhookEvent,
+  setSubscriptionActive,
 };

@@ -1,0 +1,34 @@
+# Netlify configuration for Vellum.
+# Static frontend is served from public/; all dynamic routes are rewritten
+# to the Express app wrapped in netlify/functions/api.js.
+
+[build]
+  publish = "public"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["pg", "express", "serverless-http", "@sendgrid/mail", "jsonwebtoken", "@anthropic-ai/sdk", "dotenv"]
+
+[[redirects]]
+  force = true
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  force = true
+  from = "/webhooks/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  force = true
+  from = "/config"
+  to = "/.netlify/functions/api"
+  status = 200
+
+[[redirects]]
+  force = true
+  from = "/health"
+  to = "/.netlify/functions/api"
+  status = 200
