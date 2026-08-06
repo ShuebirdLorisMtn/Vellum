@@ -22,12 +22,16 @@ WHOP_WEBHOOK_SECRET=... WEBHOOK_URL=http://localhost:3000/webhooks/whop node scr
 
 Configuration comes from a `.env` file (loaded via dotenv) — copy `.env.example` and fill in `CLAUDE_API_KEY`, `DATABASE_URL` (Postgres), `JWT_SECRET`, `SENDGRID_API_KEY`, `WHOP_WEBHOOK_SECRET`, `WHOP_PRODUCT_URL`, `APP_BASE_URL`.
 
-## Known gaps (as of this writing)
+## Notes on recent structure
 
-- **`src/claude.js` does not exist**, but `src/server.js` requires it (`generateFromClaude(apiKey, model, prompt, maxTokens)`), so the server crashes on startup until that module is created.
-- **`public/index.html` does not exist.** `public/app.js` and `magic.html` both assume a root page (app.js looks up DOM ids `signup`, `email`, `auth`, `app`, `who`, `signout`, `generate`, `prompt`, `title`, `output`; magic.html redirects to `/` after sign-in). The full landing-page HTML currently lives embedded inside `README.md` rather than in `public/`.
-- `scripts/test-whop-webhook.js` uses `require('node-fetch')` with node-fetch v3, which is ESM-only — the require fails on Node versions without `require(esm)` support (works on Node ≥ 22.12).
-- `body-parser` is required in server.js but unused and not declared in package.json.
+- **`src/claude.js`** implements `generateFromClaude(apiKey, model, prompt, maxTokens, system)` using the official `@anthropic-ai/sdk`. Default model is `claude-opus-5` (override with `CLAUDE_MODEL`). For Opus 5 / Fable 5 models it opts into the server-side refusal-fallback beta (`fallbacks: "default"`), and it throws a `claude_refused` error on `stop_reason: "refusal"`.
+- **`public/index.html`** is the canonical landing page (the same HTML is also embedded in `README.md` — beware drift; index.html is what's served). It contains the auth/app section whose DOM ids `public/app.js` depends on: `signup`, `email`, `auth`, `app`, `who`, `signout`, `generate`, `prompt`, `title`, `output`.
+- `scripts/test-whop-webhook.js` uses the global `fetch` built into Node 18+ (no node-fetch dependency).
+- The free document is decremented only **after** a successful generation, so a failed Claude call doesn't burn the user's free doc.
+
+## Local development
+
+Start Postgres, create the DB, and load the schema (`psql -d vellum -f db/schema.sql` — or let `src/db.js` self-provision), then copy `.env.example` to `.env` and set at least `DATABASE_URL` and `JWT_SECRET`. The server boots and serves the frontend without `CLAUDE_API_KEY`/`SENDGRID_API_KEY`; those endpoints return 500 until configured.
 
 ## Architecture
 
