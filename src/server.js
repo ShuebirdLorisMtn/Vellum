@@ -1,0 +1,127 @@
+const express = require('express');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+
+require('dotenv').config();
+
+const { generateFromClaude } = require('./claude');
+const db = require('./db');
+
+const app = express();
+app.use(bodyParser.json({ limit: '1mb' }));
+
+const PORT = process.env.PORT || 3000;
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-2.1';
+const WHOP_WEBHOOK_SECRET = process.env.WHOP_WEBHOOK_SECRET || '';
+const JWT_SECRET = process.env.JWT_SECRET || 'change_this_in_production';
+
+function authMiddleware(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header) return res.status(401).json({ error: 'Missing Authorization header' });
+  const parts = header.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') return res.status(401).json({ error: 'Invalid Authorization header' });
+  try {
+    const payload = jwt.verify(parts[1], JWT_SECRET);
+    req.user = payload;
+    return next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Signup: simple email-only signup that returns a JWT for demo purposes
+app.post('/api/signup', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'email required' });
+  try {
+    const user = await db.createUser(email.toLowerCase());
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    res.json({ token, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
+// Generate endpoint: body { prompt, title }
+app.post('/api/generate', authMiddleware, async (req, res) => {
+  const { prompt, title } = req.body;
+  if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  try {
+    const user = await db.getUserById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'user not found' });
+
+    if (user.free_docs_remaining > 0) {
+      // consume free doc
+      await db.decrementFreeDoc(user.id);
+    } else if (!user.subscription_active) {
+      // require purchase
+      return res.status(402).json({ error: 'payment_required', purchase_url: 'https://your-whop-product-url' });
+    }
+
+    // call Claude
+    const system = `You are Vellum — a document architect. Produce a concise document based on the user's prompt.`;
+    const fullPrompt = `${system}\nUSER PROMPT:\n${prompt}`;
+    const output = await generateFromClaude(CLAUDE_API_KEY, CLAUDE_MODEL, fullPrompt, 1500);
+
+    const doc = await db.saveDocument(user.id, title || null, output);
+    res.json({ document: doc });
+  } catch (err) {
+    console.error('generate error', err);
+    res.status(500).json({ error: 'server error' });
+  }
+});
+
+// Whop webhook endpoint (verify HMAC)
+app.post('/webhooks/whop', express.raw({ type: '*/*' }), async (req, res) => {
+  const sigHeader = req.headers['x-whop-signature'] || req.headers['whop-signature'] || '';
+  const payloadRaw = req.body;
+  let payloadJson;
+  try {
+    payloadJson = JSON.parse(payloadRaw.toString('utf8'));
+  } catch (e) {
+    return res.status(400).send('invalid json');
+  }
+
+  // Verify HMAC-SHA256 signature: this is a common pattern; ensure it matches Whop's configured signature method.
+  if (WHOP_WEBHOOK_SECRET) {
+    const hmac = crypto.createHmac('sha256', WHOP_WEBHOOK_SECRET).update(payloadRaw).digest('hex');
+    if (!sigHeader || (hmac !== sigHeader)) {
+      console.warn('Invalid webhook signature', { got: sigHeader, expected: hmac });
+      return res.status(401).send('invalid signature');
+    }
+  }
+
+  // idempotency: store event id
+  try {
+    const eventId = payloadJson.id || payloadJson.event_id || (payloadJson.data && payloadJson.data.id) || null;
+    if (eventId) {
+      await db.storeWebhookEvent(eventId, payloadJson);
+    }
+    // Example: payload contains buyer email and product info
+    const email = (payloadJson.buyer && payloadJson.buyer.email) || (payloadJson.data && payloadJson.data.buyer && payloadJson.data.buyer.email) || payloadJson.email || null;
+    if (email) {
+      const user = await db.findUserByEmail(email.toLowerCase());
+      if (user) {
+        await db.setSubscriptionActive(user.id, true);
+        console.log('Enabled subscription for', email);
+      } else {
+        // Optionally create the user and activate
+        const newUser = await db.createUser(email.toLowerCase());
+        await db.setSubscriptionActive(newUser.id, true);
+        console.log('Created and activated user for', email);
+      }
+    }
+
+    res.status(200).send('ok');
+  } catch (err) {
+    console.error('webhook handling error', err);
+    res.status(500).send('server error');
+  }
+});
+
+app.listen(PORT, () => console.log(`Vellum backend listening on ${PORT}`));

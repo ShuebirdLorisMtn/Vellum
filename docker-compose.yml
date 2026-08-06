@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vellum
+    ports:
+      - "5432:5432"
+    volumes:
+      - vellum_pgdata:/var/lib/postgresql/data
+  web:
+    build: .
+    command: npm start
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/vellum
+      CLAUDE_API_KEY: test
+      CLAUDE_MODEL: claude-2.1
+      WHOP_WEBHOOK_SECRET: testsecret
+      JWT_SECRET: testjwt
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+volumes:
+  vellum_pgdata:
