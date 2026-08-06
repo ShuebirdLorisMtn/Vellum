@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Vellum — Magic Link</title>
+    <style>body{font-family:system-ui, Arial; margin:2rem}</style>
+  </head>
+  <body>
+    <h1>Signing you in…</h1>
+    <p id="msg">Please wait...</p>
+    <script>
+      (async ()=>{
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const msg = document.getElementById('msg');
+        if (!token) { msg.textContent = 'Missing token'; return }
+        try {
+          const res = await fetch('/api/magic-consume', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token }) });
+          if (!res.ok) { msg.textContent = 'Token invalid or expired'; return }
+          const j = await res.json();
+          localStorage.setItem('vellum_token', j.token);
+          msg.textContent = 'Signed in. Redirecting to app…';
+          setTimeout(()=>{ window.location.href = '/' }, 1200);
+        } catch (e) {
+          console.error(e);
+          msg.textContent = 'Error while signing in';
+        }
+      })();
+    </script>
+  </body>
+</html>
