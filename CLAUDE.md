@@ -65,4 +65,6 @@ The trickiest code in the repo — see `README.deploy.md` for deploy/test detail
 
 ## Deployment
 
-`.github/workflows/azure-webapps-node.yml` deploys to an Azure Web App on push to `main` (Node 20). It requires `AZURE_WEBAPP_NAME` in the workflow (currently the `your-app-name` placeholder) and the `AZURE_WEBAPP_PUBLISH_PROFILE` repo secret.
+**Netlify (active):** the site `vellum-docs-app` (https://vellum-docs-app.netlify.app) serves `public/` as static assets and runs the Express app as a serverless function. `src/app.js` exports the app (no `listen`); `src/server.js` wraps it for local `npm start`; `netlify/functions/api.js` wraps it with `serverless-http`; `netlify.toml` rewrites `/api/*`, `/webhooks/*`, `/config`, and `/health` to the function. Keep new dynamic routes covered by those redirects. `src/db.js` falls back to `NETLIFY_DATABASE_URL` and enables TLS when the connection string has `sslmode=require`. Test locally with `netlify dev --offline` (port 8888). Deploys are pushed via the Netlify MCP `deploy-site` flow, not git-linked CI.
+
+**Azure (dormant):** `.github/workflows/azure-webapps-node.yml` deploys to an Azure Web App on push to `main` (Node 20). It requires `AZURE_WEBAPP_NAME` in the workflow (currently the `your-app-name` placeholder) and the `AZURE_WEBAPP_PUBLISH_PROFILE` repo secret — it fails until those are configured or the workflow is removed.

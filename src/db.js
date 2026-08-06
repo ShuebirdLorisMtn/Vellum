@@ -1,11 +1,17 @@
 const { Pool } = require('pg');
 
-const DATABASE_URL = process.env.DATABASE_URL;
+// NETLIFY_DATABASE_URL is set automatically when using Netlify DB (Neon).
+const DATABASE_URL = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 if (!DATABASE_URL) {
   console.warn('DATABASE_URL is not set — DB functions will fail until configured');
 }
 
-const pool = new Pool({ connectionString: DATABASE_URL });
+// Hosted Postgres (Neon, RDS, etc.) requires TLS; local dev does not.
+const useSSL = /sslmode=require/.test(DATABASE_URL || '') || process.env.DATABASE_SSL === 'true';
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: useSSL ? { rejectUnauthorized: false } : undefined,
+});
 
 async function ensureSchema() {
   const client = await pool.connect();
