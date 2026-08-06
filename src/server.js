@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 require('dotenv').config();
 
@@ -16,6 +17,7 @@ const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-2.1';
 const WHOP_WEBHOOK_SECRET = process.env.WHOP_WEBHOOK_SECRET || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_in_production';
+const WHOP_PRODUCT_URL = process.env.WHOP_PRODUCT_URL || '';
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
@@ -32,6 +34,14 @@ function authMiddleware(req, res, next) {
 }
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Serve static frontend
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Expose a small config endpoint used by the frontend to discover WHOP_PRODUCT_URL
+app.get('/config', (req, res) => {
+  res.json({ WHOP_PRODUCT_URL });
+});
 
 // Signup: simple email-only signup that returns a JWT for demo purposes
 app.post('/api/signup', async (req, res) => {
@@ -60,7 +70,7 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
       await db.decrementFreeDoc(user.id);
     } else if (!user.subscription_active) {
       // require purchase
-      return res.status(402).json({ error: 'payment_required', purchase_url: 'https://your-whop-product-url' });
+      return res.status(402).json({ error: 'payment_required', purchase_url: WHOP_PRODUCT_URL || 'https://your-whop-product-url' });
     }
 
     // call Claude
