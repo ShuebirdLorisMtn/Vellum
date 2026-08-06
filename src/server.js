@@ -11,7 +11,21 @@ const { generateFromClaude } = require('./claude');
 const db = require('./db');
 
 const app = express();
-app.use(bodyParser.json({ limit: '1mb' }));
+
+// Use express.json with a verify hook so we capture raw bytes for the Whop webhook route.
+// This lets us both have parsed JSON for normal endpoints and the raw payload for HMAC verification.
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, res, buf, encoding) => {
+    try {
+      if (req && req.originalUrl && req.originalUrl.startsWith('/webhooks/whop')) {
+        req.rawBody = buf;
+      }
+    } catch (e) {
+      // ignore verify errors, normal json parsing will handle them
+    }
+  }
+}));
 
 const PORT = process.env.PORT || 3000;
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
@@ -136,9 +150,12 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
 });
 
 // Whop webhook endpoint (verify HMAC)
-app.post('/webhooks/whop', express.raw({ type: '*/*' }), async (req, res) => {
-  const sigHeader = req.headers['x-whop-signature'] || req.headers['whop-signature'] || '';
-  const payloadRaw = req.body;
+app.post('/webhooks/whop', async (req, res) => {
+  // Signature headers: try common variants
+  const sigHeader = (req.headers['x-whop-signature'] || req.headers['whop-signature'] || '').toString();
+
+  // Prefer the raw body captured by the express.json verify hook; fall back to the parsed body.
+  const payloadRaw = req.rawBody || Buffer.from(JSON.stringify(req.body || {}));
   let payloadJson;
   try {
     payloadJson = JSON.parse(payloadRaw.toString('utf8'));
@@ -146,12 +163,41 @@ app.post('/webhooks/whop', express.raw({ type: '*/*' }), async (req, res) => {
     return res.status(400).send('invalid json');
   }
 
-  // Verify HMAC-SHA256 signature: this is a common pattern; ensure it matches Whop's configured signature method.
+  // Verify HMAC-SHA256 signature. Whop may provide hex or base64 and sometimes prefix with "sha256=".
   if (WHOP_WEBHOOK_SECRET) {
-    const hmac = crypto.createHmac('sha256', WHOP_WEBHOOK_SECRET).update(payloadRaw).digest('hex');
-    if (!sigHeader || (hmac !== sigHeader)) {
-      console.warn('Invalid webhook signature', { got: sigHeader, expected: hmac });
-      return res.status(401).send('invalid signature');
+    const incoming = sigHeader.replace(/^sha256=/i, '').trim();
+    let verified = false;
+    try {
+      const expectedHex = crypto.createHmac('sha256', WHOP_WEBHOOK_SECRET).update(payloadRaw).digest('hex');
+      const expectedBase64 = crypto.createHmac('sha256', WHOP_WEBHOOK_SECRET).update(payloadRaw).digest('base64');
+
+      // Try hex
+      try {
+        const incBuf = Buffer.from(incoming, 'hex');
+        const expBuf = Buffer.from(expectedHex, 'hex');
+        if (incBuf.length === expBuf.length && crypto.timingSafeEqual(incBuf, expBuf)) verified = true;
+      } catch (e) {
+        // not hex or mismatch
+      }
+
+      // Try base64
+      if (!verified) {
+        try {
+          const incBuf2 = Buffer.from(incoming, 'base64');
+          const expBuf2 = Buffer.from(expectedBase64, 'base64');
+          if (incBuf2.length === expBuf2.length && crypto.timingSafeEqual(incBuf2, expBuf2)) verified = true;
+        } catch (e) {
+          // not base64 or mismatch
+        }
+      }
+
+      if (!verified) {
+        console.warn('Invalid webhook signature', { got: sigHeader });
+        return res.status(401).send('invalid signature');
+      }
+    } catch (err) {
+      console.error('signature verification failure', err);
+      return res.status(500).send('signature_verification_error');
     }
   }
 
