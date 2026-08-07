@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vellum — F*** Your Cookie Cutter Template.</title>
+    <title>Vellum — Fuck Your Cookie Cutter Template.</title>
     <meta name="description" content="Vellum is the world's first self-learning Cognitive Document Architect. Three questions. Perfect document. From custom hellraisers to polite praisers. First one's free.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg: #07070a;
@@ -26,7 +27,6 @@
             --radius-xl: 20px;
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         * {
             margin: 0;
             padding: 0;
@@ -43,8 +43,6 @@
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
         }
-
-        /* Ambient background */
         body::before {
             content: '';
             position: fixed;
@@ -61,18 +59,10 @@
             animation: ambientShift 20s ease-in-out infinite;
         }
         @keyframes ambientShift {
-            0%,
-            100% {
-                transform: translate(0, 0);
-            }
-            33% {
-                transform: translate(1.5%, -1%);
-            }
-            66% {
-                transform: translate(-1%, 1.5%);
-            }
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(1.5%, -1%); }
+            66% { transform: translate(-1%, 1.5%); }
         }
-
         .app-container {
             position: relative;
             z-index: 1;
@@ -83,8 +73,6 @@
             display: flex;
             flex-direction: column;
         }
-
-        /* ── NAV ── */
         .nav {
             display: flex;
             align-items: center;
@@ -92,6 +80,8 @@
             padding: 0.8rem 0;
             margin-bottom: 2rem;
             border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 0.8rem;
         }
         .nav-logo {
             font-weight: 800;
@@ -118,7 +108,8 @@
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 1.2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
         .nav-link {
             color: var(--text-secondary);
@@ -134,20 +125,10 @@
         .nav-link:hover {
             color: var(--accent);
         }
-        .nav-link.vault-link {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-        }
-        .vault-badge {
-            background: var(--accent-fire);
-            color: #fff;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 0.15rem 0.45rem;
-            border-radius: 50px;
-            min-width: 18px;
-            text-align: center;
+        .user-email {
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 600;
         }
         .nav-cta {
             padding: 0.5rem 1.2rem;
@@ -159,12 +140,11 @@
             text-decoration: none;
             letter-spacing: 0.03em;
             transition: var(--transition);
+            white-space: nowrap;
         }
         .nav-cta:hover {
             box-shadow: 0 4px 18px var(--accent-fire-glow);
         }
-
-        /* ── MODES (View Switching) ── */
         .view {
             display: none;
             flex-direction: column;
@@ -173,8 +153,6 @@
         .view.active {
             display: flex;
         }
-
-        /* ── GENERATOR VIEW ── */
         .header {
             text-align: center;
             margin-bottom: 2rem;
@@ -208,8 +186,6 @@
             font-size: 0.9rem;
             margin-top: 0.4rem;
         }
-
-        /* Tone Selector */
         .tone-selector {
             display: flex;
             gap: 0.4rem;
@@ -265,8 +241,6 @@
             color: var(--accent-ice);
             box-shadow: 0 0 12px rgba(126, 184, 218, 0.15);
         }
-
-        /* Input Card */
         .input-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -335,7 +309,6 @@
         .input-group textarea::placeholder {
             color: #444;
         }
-
         .generate-btn {
             width: 100%;
             padding: 1.1rem;
@@ -361,8 +334,6 @@
             transform: none;
             box-shadow: none;
         }
-
-        /* Free banner */
         .free-banner {
             text-align: center;
             margin-bottom: 1.5rem;
@@ -374,12 +345,6 @@
             color: var(--accent);
             font-weight: 600;
         }
-        .free-banner .free-count {
-            font-weight: 800;
-            color: var(--text);
-        }
-
-        /* Output Area */
         .output-container {
             background: var(--surface);
             border: 1px solid var(--accent);
@@ -393,16 +358,9 @@
             display: block;
         }
         @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
         .output-header {
             display: flex;
             align-items: center;
@@ -477,7 +435,6 @@
             background: rgba(217, 139, 139, 0.2);
             color: #d98b8b;
         }
-
         .output-body {
             padding: 2rem 1.5rem;
             white-space: pre-wrap;
@@ -518,8 +475,6 @@
             color: #bbb;
             font-style: italic;
         }
-
-        /* Feedback Row */
         .feedback-row {
             display: flex;
             align-items: center;
@@ -570,8 +525,6 @@
         .feedback-thanks.visible {
             display: inline;
         }
-
-        /* Output Actions */
         .output-actions {
             display: flex;
             gap: 0.6rem;
@@ -604,8 +557,6 @@
         .action-btn.primary:hover {
             box-shadow: 0 4px 15px var(--accent-glow);
         }
-
-        /* Suggested Next */
         .suggested-next {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -654,53 +605,41 @@
             color: var(--accent);
             font-weight: 700;
         }
-
-        /* Email Capture */
-        .email-capture {
-            background: linear-gradient(135deg, rgba(201, 169, 110, 0.08), rgba(232, 93, 58, 0.05));
-            border: 1px solid rgba(201, 169, 110, 0.25);
+        .auth-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            margin-top: 1.5rem;
+            padding: 2rem;
             text-align: center;
-            display: none;
+            margin: 2rem 0;
         }
-        .email-capture.visible {
-            display: block;
-            animation: fadeSlideIn 0.5s ease;
+        .auth-section h3 {
+            margin-bottom: 0.5rem;
         }
-        .email-capture h3 {
-            font-weight: 700;
-            margin-bottom: 0.3rem;
-            font-size: 1rem;
-        }
-        .email-capture p {
-            font-size: 0.82rem;
+        .auth-section p {
             color: var(--text-secondary);
+            font-size: 0.85rem;
             margin-bottom: 1rem;
         }
-        .email-capture .email-row {
-            display: flex;
-            gap: 0.6rem;
-            max-width: 450px;
-            margin: 0 auto;
-        }
-        .email-capture input {
-            flex: 1;
-            padding: 0.7rem 1rem;
+        .auth-section input {
+            padding: 0.8rem 1rem;
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             color: var(--text);
             font-family: inherit;
             font-size: 0.9rem;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
         }
-        .email-capture input:focus {
+        .auth-section input:focus {
             outline: none;
             border-color: var(--accent);
         }
-        .email-capture button {
-            padding: 0.7rem 1.3rem;
+        .auth-section button {
+            margin-top: 0.8rem;
+            padding: 0.8rem 2rem;
             background: var(--accent);
             color: #0a0a0a;
             border: none;
@@ -711,75 +650,30 @@
             font-size: 0.9rem;
             transition: var(--transition);
         }
-        .email-capture button:hover {
+        .auth-section button:hover {
             box-shadow: 0 4px 15px var(--accent-glow);
         }
-        .email-capture .skip-link {
-            display: block;
-            margin-top: 0.8rem;
+        .auth-section .auth-note {
             font-size: 0.75rem;
             color: var(--text-muted);
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-family: inherit;
-            text-decoration: underline;
+            margin-top: 0.8rem;
         }
-        .email-capture .confirmation {
-            display: none;
-            color: var(--accent-success);
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-        .email-capture .confirmation.visible {
-            display: block;
-        }
-
-        /* Loading */
-        .loading-overlay {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 0.8rem;
-            padding: 3rem;
-            color: var(--text-secondary);
-            flex-direction: column;
-        }
-        .loading-overlay.visible {
-            display: flex;
-        }
-        .spinner {
-            width: 28px;
-            height: 28px;
-            border: 3px solid var(--border);
-            border-top: 3px solid var(--accent-fire);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .loading-text {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        /* ── VAULT VIEW ── */
-        .vault-header {
+        .cta-section {
+            background: linear-gradient(135deg, rgba(201, 169, 110, 0.08), rgba(232, 93, 58, 0.05));
+            border: 1px solid rgba(201, 169, 110, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-top: 2rem;
             text-align: center;
-            margin-bottom: 2rem;
         }
-        .vault-header h2 {
-            font-size: 1.8rem;
+        .cta-section h3 {
             font-weight: 700;
-            letter-spacing: -0.02em;
+            margin-bottom: 0.3rem;
         }
-        .vault-header p {
+        .cta-section p {
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            margin-bottom: 1rem;
         }
         .vault-list {
             display: flex;
@@ -811,23 +705,34 @@
             font-size: 0.75rem;
             color: var(--text-muted);
         }
-        .vault-item .vault-tone {
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.2rem 0.5rem;
-            border-radius: 50px;
-        }
         .vault-empty {
             text-align: center;
             padding: 3rem;
             color: var(--text-muted);
         }
-        .vault-empty .empty-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .loading-overlay {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 3rem;
+            color: var(--text-secondary);
+            flex-direction: column;
         }
-
-        /* ── FOOTER ── */
+        .loading-overlay.visible {
+            display: flex;
+        }
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent-fire);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         .footer {
             text-align: center;
             padding: 2rem 0;
@@ -845,8 +750,6 @@
             margin-bottom: 0.4rem;
             text-transform: uppercase;
         }
-
-        /* ── RESPONSIVE ── */
         @media (max-width: 600px) {
             .app-container {
                 padding: 1rem 1rem;
@@ -860,9 +763,6 @@
             .output-body {
                 padding: 1.2rem 1rem;
             }
-            .nav-links {
-                gap: 0.6rem;
-            }
             .tone-btn {
                 font-size: 0.7rem;
                 padding: 0.4rem 0.7rem;
@@ -871,7 +771,6 @@
     </style>
 </head>
 <body>
-
     <div class="app-container">
         <!-- Navigation -->
         <nav class="nav">
@@ -879,27 +778,24 @@
                 <span class="logo-mark">V</span> Vellum
             </a>
             <div class="nav-links">
-                <button class="nav-link vault-link" onclick="switchView('vault')">
-                    📦 Vault <span class="vault-badge" id="vaultCount">0</span>
-                </button>
-                <a href="#" class="nav-cta" onclick="document.getElementById('ctaSection').scrollIntoView({behavior:'smooth'}); return false;">Go Unlimited</a>
+                <span class="user-email" id="userEmailDisplay"></span>
+                <button class="nav-link" id="vaultLink" onclick="switchView('vault')">📦 Vault <span id="vaultCount">0</span></button>
+                <button class="nav-link" id="loginBtn" onclick="showAuth()">🔑 Login</button>
+                <button class="nav-link" id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+                <a href="YOUR_WHOP_URL_HERE" class="nav-cta">Go Unlimited</a>
             </div>
         </nav>
 
-        <!-- ── GENERATOR VIEW ── -->
+        <!-- Generator View -->
         <div class="view active" id="view-generator">
             <div class="header">
-                <div class="motto">F*** Your Cookie Cutter Template.</div>
+                <div class="motto">Fuck Your Cookie Cutter Template.</div>
                 <h1>Three Questions.<br><span>Perfect Document.</span></h1>
-                <p class="subtitle">From Custom Hellraisers to Polite Praisers — we architect the document your situation demands.</p>
+                <p class="subtitle">From Custom Hellraisers to Polite Praisers — powered by DeepSeek AI. First one's free.</p>
             </div>
-
-            <!-- Free banner -->
-            <div class="free-banner">
-                🎉 <span class="free-count" id="freeCount">1</span> free document remaining. No credit card. No bullshit.
+            <div class="free-banner" id="freeBanner">
+                🎉 <span id="freeStatus">1 free document ready. No login required.</span>
             </div>
-
-            <!-- Tone Selector -->
             <div class="tone-selector" id="toneSelector">
                 <button class="tone-btn active-fire" data-tone="hellraiser">🔥 Hellraiser</button>
                 <button class="tone-btn" data-tone="firm">⚡ Firm</button>
@@ -907,8 +803,6 @@
                 <button class="tone-btn" data-tone="polite">🤝 Polite</button>
                 <button class="tone-btn" data-tone="praiser">❄️ Praiser</button>
             </div>
-
-            <!-- Input Card -->
             <div class="input-card" id="inputCard">
                 <div class="input-group">
                     <label><span class="number">1</span> Who Are You?</label>
@@ -926,14 +820,10 @@
                     ◆ Generate My Document
                 </button>
             </div>
-
-            <!-- Loading -->
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
-                <span class="loading-text" id="loadingText">Architecting your document...</span>
+                <span id="loadingText">Architecting your document...</span>
             </div>
-
-            <!-- Output -->
             <div class="output-container" id="outputContainer">
                 <div class="output-header">
                     <div class="doc-meta">
@@ -944,712 +834,93 @@
                 </div>
                 <div class="output-body" id="outputBody"></div>
                 <div class="feedback-row">
-                    <span class="feedback-label">Was this document on point?</span>
+                    <span class="feedback-label">Was this on point?</span>
                     <button class="feedback-btn thumbs-up" onclick="submitFeedback('up')">👍 Perfect</button>
                     <button class="feedback-btn thumbs-down" onclick="submitFeedback('down')">👎 Not quite</button>
                     <span class="feedback-thanks" id="feedbackThanks">Got it — learning for next time. 🧠</span>
                 </div>
                 <div class="output-actions">
                     <button class="action-btn primary" onclick="copyDocument()">📋 Copy</button>
+                    <button class="action-btn" onclick="shareDocument()">🔗 Share</button>
                     <button class="action-btn" onclick="regenerateDocument()">🔄 Regenerate</button>
                     <button class="action-btn" onclick="downloadDocument()">💾 Download .md</button>
                 </div>
             </div>
-
-            <!-- Suggested Next Documents -->
             <div class="suggested-next" id="suggestedNext">
                 <h3>📋 You Might Also Need...</h3>
                 <div class="suggestion-list" id="suggestionList"></div>
             </div>
-
-            <!-- Email Capture -->
-            <div class="email-capture" id="emailCapture">
-                <div id="emailForm">
-                    <h3>Save this document to your Vault.</h3>
-                    <p>Free unlimited storage. Access your documents anytime. Plus we'll send you pro tips for maximum impact.</p>
-                    <div class="email-row">
-                        <input type="email" id="emailInput" placeholder="you@example.com">
-                        <button onclick="captureEmail()">Save & Continue</button>
-                    </div>
-                    <button class="skip-link" onclick="skipEmail()">No thanks, just give me my document</button>
-                </div>
-                <div class="confirmation" id="emailConfirmation">✅ Saved! Check your inbox for access to your Vault.</div>
-            </div>
-
-            <!-- CTA Section -->
-            <div class="email-capture visible" id="ctaSection" style="margin-top: 2rem;">
-                <h3>🔥 Go Unlimited — $29/month</h3>
-                <p>Unlimited documents. All tones. Full Vault access. Priority gene improvements. Cancel anytime.</p>
-                <a href="#" class="nav-cta" style="display:inline-block;padding:0.8rem 2rem;font-size:1rem;">Get Vellum Unlimited →</a>
-                <p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem;">Available on Whop. Secure payment. Instant access.</p>
+            <div class="cta-section" id="ctaSection">
+                <h3>🔥 Go Unlimited — $29/month on Whop</h3>
+                <p>Unlimited AI-powered documents. All tones. Cloud vault. Priority features. Cancel anytime.</p>
+                <a href="YOUR_WHOP_URL_HERE" class="nav-cta" style="display:inline-block;padding:0.8rem 2rem;font-size:1rem;">Get Vellum Unlimited →</a>
             </div>
         </div>
 
-        <!-- ── VAULT VIEW ── -->
+        <!-- Auth View -->
+        <div class="view" id="view-auth">
+            <div class="auth-section">
+                <h3>🔑 Access Your Vault</h3>
+                <p>Enter your email — we'll send you a magic link. No password needed.</p>
+                <input type="email" id="authEmail" placeholder="you@example.com">
+                <br>
+                <button onclick="sendMagicLink()">Send Magic Link</button>
+                <p class="auth-note" id="authNote"></p>
+            </div>
+        </div>
+
+        <!-- Vault View -->
         <div class="view" id="view-vault">
-            <div class="vault-header">
+            <div class="header">
                 <h2>📦 Your Document Vault</h2>
-                <p>Every document you generate, stored and ready when you need it.</p>
+                <p class="subtitle">Every document you generate, saved to the cloud. Access anywhere.</p>
             </div>
             <div class="vault-list" id="vaultList">
                 <div class="vault-empty">
-                    <div class="empty-icon">📭</div>
-                    <p>No documents yet. Go generate your first masterpiece.</p>
-                    <button class="action-btn primary" style="margin-top:1rem;" onclick="switchView('generator')">Create Document →</button>
+                    <p>Login to see your documents.</p>
+                    <button class="action-btn primary" style="margin-top:1rem;" onclick="showAuth()">Login →</button>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
         <footer class="footer">
-            <p class="footer-motto">F*** Your Cookie Cutter Template.™</p>
+            <p class="footer-motto">Fuck Your Cookie Cutter Template.™</p>
             <p>Vellum — Cognitive Document Architecture™</p>
-            <p style="margin-top:0.3rem;"><a href="#" style="color:var(--text-muted);">Privacy</a> · <a href="#" style="color:var(--text-muted);">Terms</a> · <a href="#" style="color:var(--text-muted);">Contact</a></p>
+            <p style="margin-top:0.3rem;">Powered by DeepSeek AI</p>
         </footer>
     </div>
 
     <script>
         // ============================================
-        // STATE MANAGEMENT
+        // SUPABASE CLIENT
+        // ============================================
+        const SUPABASE_URL = 'https://lpxernploomjqkdrxkkt.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxweGVybnBsb29tanFrZHJ4a2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyMjA4MjksImV4cCI6MjA2NTc5NjgyOX0.CqN8D8TBzkbhKwD2N1B3TNSA-UBZVNrCOXLuDObLtMA';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ============================================
+        // STATE
         // ============================================
         const STATE = {
             selectedTone: 'hellraiser',
-            freeDocsRemaining: parseInt(localStorage.getItem('vellum_freeDocs') || '1'),
-            documentVault: JSON.parse(localStorage.getItem('vellum_vault') || '[]'),
-            learningData: JSON.parse(localStorage.getItem('vellum_learning') || '{"feedback":[], "tonePreferences":{}, "geneSuccessRates":{}}'),
+            freeDocsRemaining: 1,
             currentDocument: null,
             feedbackSubmitted: false,
-            userEmail: localStorage.getItem('vellum_email') || null,
+            user: null,
+            documents: [],
         };
 
-        function saveState() {
-            localStorage.setItem('vellum_freeDocs', STATE.freeDocsRemaining);
-            localStorage.setItem('vellum_vault', JSON.stringify(STATE.documentVault));
-            localStorage.setItem('vellum_learning', JSON.stringify(STATE.learningData));
-            if (STATE.userEmail) localStorage.setItem('vellum_email', STATE.userEmail);
-        }
-
         // ============================================
-        // GENE SYSTEM
+        // AUTH
         // ============================================
-        const GENE_LIBRARY = {
-            mirror: {
-                name: 'Mirror',
-                cssClass: 'gene-mirror',
-                triggers: ['blame', 'frustrated', 'tired of', 'stop', 'sick of', 'blaming', 'conflict', 'tension',
-                    'misunderstood', 'pissed'
-                ],
-                weight: 1.0,
-            },
-            rosetta: {
-                name: 'Rosetta Stone',
-                cssClass: 'gene-rosetta',
-                triggers: ['explain', 'justify', 'prove', 'value', 'roi', 'business', 'technical', 'non-technical',
-                    'board', 'investor', 'translate', 'bridge'
-                ],
-                weight: 1.0,
-            },
-            arbiter: {
-                name: 'Arbiter',
-                cssClass: 'gene-arbiter',
-                triggers: ['disagree', 'disagreement', 'conflict', 'both sides', 'compromise', 'resolution', 'decide',
-                    'decision', 'stuck', 'impasse', 'blame'
-                ],
-                weight: 1.0,
-            },
-            catalyst: {
-                name: 'Catalyst',
-                cssClass: 'gene-catalyst',
-                triggers: ['start', 'launch', 'action', 'momentum', 'kickoff', 'motivate', 'inspire', 'move forward',
-                    'quick win', 'first step', 'now', 'immediate'
-                ],
-                weight: 1.0,
-            },
-            magna: {
-                name: 'Magna Carta',
-                cssClass: 'gene-magna',
-                triggers: ['charter', 'principles', 'rules', 'foundation', 'guidelines', 'rights', 'responsibilities',
-                    'framework', 'system', 'process', 'policy', 'standard'
-                ],
-                weight: 1.0,
-            },
-        };
-
-        function detectGenes(issue, outcome) {
-            const combined = (issue + ' ' + outcome).toLowerCase();
-            const scored = Object.entries(GENE_LIBRARY).map(([key, gene]) => {
-                const baseScore = gene.triggers.filter(kw => combined.includes(kw)).length;
-                // Apply learned weight adjustments
-                const learnedWeight = STATE.learningData.geneSuccessRates[key] || 1.0;
-                return { key, ...gene, score: baseScore * learnedWeight * gene.weight };
-            });
-            scored.sort((a, b) => b.score - a.score);
-            return scored.slice(0, 3);
+        async function checkUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            STATE.user = user;
+            updateUIForAuth();
+            if (user) await loadVault();
         }
 
-        // ============================================
-        // DOCUMENT GENERATION
-        // ============================================
-        const TONE_PROFILES = {
-            hellraiser: {
-                name: 'Hellraiser',
-                cssClass: 'fire',
-                intensity: 10,
-                salutation: (name) => `Alright ${name}. Let's cut the bullshit.`,
-                adjectives: ['unacceptable', 'damning', 'brutal', 'non-negotiable', 'immediate'],
-                closing: 'This ends now. No more excuses. No more delays.',
-                suggestedNext: [
-                    'Follow-up: Individual accountability emails for each team member',
-                    'Escalation: Formal performance improvement plan documentation',
-                    'The "Clean House" reorganization proposal',
-                ],
-            },
-            firm: {
-                name: 'Firm',
-                cssClass: 'gold',
-                intensity: 7,
-                salutation: (name) => `${name}, this needs to be said clearly.`,
-                adjectives: ['critical', 'serious', 'necessary', 'clear', 'direct'],
-                closing: 'The path forward requires immediate and sustained action. I expect to see progress.',
-                suggestedNext: [
-                    'The detailed action plan with milestones',
-                    'Stakeholder update: Progress report template',
-                    'Accountability tracker spreadsheet',
-                ],
-            },
-            direct: {
-                name: 'Direct',
-                cssClass: 'gold',
-                intensity: 5,
-                salutation: (name) => `${name}, here's where we stand.`,
-                adjectives: ['important', 'clear', 'strategic', 'actionable', 'focused'],
-                closing: 'Let's move forward with clarity and purpose.',
-                suggestedNext: [
-                    'The executive summary for leadership',
-                    'Project roadmap with key milestones',
-                    'Team alignment document',
-                ],
-            },
-            polite: {
-                name: 'Polite',
-                cssClass: 'ice',
-                intensity: 3,
-                salutation: (name) => `Dear ${name}, I wanted to share some thoughts I believe will be valuable.`,
-                adjectives: ['thoughtful', 'constructive', 'collaborative', 'respectful', 'productive'],
-                closing: 'Thank you for your time and consideration. I look forward to a positive outcome.',
-                suggestedNext: [
-                    'The gracious follow-up thank-you note',
-                    'Relationship-strengthening check-in email',
-                    'Collaborative workshop proposal',
-                ],
-            },
-            praiser: {
-                name: 'Praiser',
-                cssClass: 'ice',
-                intensity: 1,
-                salutation: (name) => `Dear ${name}, it is with genuine appreciation that I write this.`,
-                adjectives: ['extraordinary', 'exceptional', 'inspiring', 'remarkable', 'deeply valued'],
-                closing: 'With deepest gratitude and admiration for all that you continue to contribute.',
-                suggestedNext: [
-                    'Public recognition: LinkedIn recommendation draft',
-                    'The heartfelt team-wide appreciation announcement',
-                    'Award nomination letter',
-                ],
-            },
-        };
-
-        function buildDocument(nameOccupation, issue, outcome, tone) {
-            const genes = detectGenes(issue, outcome);
-            const profile = TONE_PROFILES[tone];
-            const nameOnly = nameOccupation.split(',')[0].split(' at ')[0].trim();
-            const outcomeClean = outcome.replace(/^(a |an |to )/i, '').trim();
-
-            const title = `The ${capitalizeFirst(outcomeClean)} ${tone === 'hellraiser' ? 'Ultimatum' : tone === 'praiser' ? 'Tribute' : 'Blueprint'}`;
-            const docType = tone === 'hellraiser' ? 'DIRECTIVE' : tone === 'praiser' ? 'APPRECIATION' : 'STRATEGIC FRAMEWORK';
-
-            const sections = [];
-
-            // Mirror gene section
-            const hasMirror = genes.some(g => g.key === 'mirror');
-            if (hasMirror || tone === 'hellraiser') {
-                sections.push(
-                    `<div class="block-quote">"${profile.salutation(nameOnly)}</div>\n\n*This document was architecturally composed to address the core issue with precision and the appropriate level of directness.*`
-                    );
-            }
-
-            // Diagnosis
-            sections.push(`## ◆ Situation Assessment\n\n` +
-                `After analyzing the situation described — "${truncateText(issue, 100)}" — it is ${profile.adjectives[0]} that the current state requires ${profile.adjectives[1]} intervention. ` +
-                `The desired outcome of "${outcomeClean}" is not only achievable but ${profile.adjectives[2]}.\n\n` +
-                `**Core Issue:** The breakdown stems from a gap between intention and execution — a vacuum where ${profile.adjectives[3]} action is now ${profile.adjectives[4]}.`
-            );
-
-            // Arbiter section
-            const hasArbiter = genes.some(g => g.key === 'arbiter');
-            if (hasArbiter) {
-                sections.push(`## ◆ The Balanced Perspective\n\n` +
-                    `This is not about assigning blame — it's about architecting a resolution that honors all perspectives while demanding accountability. Both sides of this equation have valid concerns. ` +
-                    `The path forward acknowledges those concerns while establishing ${tone === 'hellraiser' ? 'non-negotiable standards' : 'clear, mutual expectations'}.`
-                );
-            }
-
-            // Magna Carta section
-            const hasMagna = genes.some(g => g.key === 'magna');
-            if (hasMagna) {
-                sections.push(`## ◆ Principles of Engagement\n\n` +
-                    `**I. The Clarity Mandate:** No initiative proceeds without ${tone === 'hellraiser' ? 'crystal-clear, documented expectations' : 'shared understanding and alignment'}.\n\n` +
-                    `**II. The Accountability Standard:** Every commitment includes a defined owner, timeline, and ${tone === 'hellraiser' ? 'consequence for failure' : 'support structure for success'}.\n\n` +
-                    `**III. The Communication Protocol:** ${tone === 'hellraiser' ? 'Silence is not an option. Updates are mandatory and frequent.' : 'Open dialogue is encouraged. Regular check-ins ensure alignment.'}`
-                );
-            }
-
-            // Action framework
-            sections.push(`## ◆ Required Actions\n\n` +
-                `**Immediate (Next 48 Hours):**\n` +
-                `- ${tone === 'hellraiser' ? 'Acknowledge receipt of this document and confirm understanding.' : 'Review this document and share initial reflections.'}\n` +
-                `- Schedule the ${tone === 'hellraiser' ? 'accountability alignment session' : 'collaborative planning session'}.\n\n` +
-                `**Short-Term (This Week):**\n` +
-                `- Implement the ${tone === 'hellraiser' ? 'mandated changes' : 'agreed-upon adjustments'}.\n` +
-                `- Establish ${tone === 'hellraiser' ? 'weekly reporting cadence' : 'regular progress touchpoints'}.\n\n` +
-                `**Sustained (Ongoing):**\n` +
-                `- ${tone === 'hellraiser' ? 'Results will be tracked. Excuses will not be accepted.' : 'Progress will be celebrated. Challenges will be addressed collaboratively.'}`
-            );
-
-            // Catalyst section
-            const hasCatalyst = genes.some(g => g.key === 'catalyst');
-            if (hasCatalyst) {
-                sections.push(`## ◆ The Catalyst\n\n` +
-                    `${tone === 'hellraiser' ? 'The time for discussion is over. The time for action is now. This document serves as both the diagnosis and the prescription. Execute accordingly.' : 
-                      'This moment presents an opportunity — one that, if seized with intention, will create lasting positive change. The next step is yours.'}`
-                );
-            }
-
-            // Closing
-            sections.push(`---\n\n<em>${profile.closing}</em>`);
-
-            const fullDocument = sections.join('\n\n');
-
-            return {
-                title,
-                docType,
-                genes,
-                fullDocument,
-                tone: profile,
-            };
-        }
-
-        function generateDocument() {
-            const nameOccupation = document.getElementById('nameOccupation').value.trim();
-            const issueTopic = document.getElementById('issueTopic').value.trim();
-            const desiredOutcome = document.getElementById('desiredOutcome').value.trim();
-
-            if (!nameOccupation || !issueTopic || !desiredOutcome) {
-                alert('All three questions must be answered. That's the deal.');
-                return;
-            }
-
-            if (STATE.freeDocsRemaining <= 0 && !STATE.userEmail) {
-                alert(
-                    'You've used your free document. Enter your email to unlock more — or go Unlimited for unrestricted access.'
-                    );
-                document.getElementById('emailCapture').classList.add('visible');
-                document.getElementById('emailCapture').scrollIntoView({ behavior: 'smooth' });
-                return;
-            }
-
-            // Show loading
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const outputContainer = document.getElementById('outputContainer');
-            const suggestedNext = document.getElementById('suggestedNext');
-            const emailCapture = document.getElementById('emailCapture');
-            const generateBtn = document.getElementById('generateBtn');
-
-            outputContainer.classList.remove('visible');
-            suggestedNext.classList.remove('visible');
-            emailCapture.classList.remove('visible');
-            loadingOverlay.classList.add('visible');
-            generateBtn.disabled = true;
-            STATE.feedbackSubmitted = false;
-
-            // Rotate loading messages
-            const loadingMessages = [
-                'Analyzing your situation...',
-                'Selecting the right genes...',
-                'Calibrating tone intensity...',
-                'Architecting your document...',
-                'Almost there...',
-            ];
-            let msgIndex = 0;
-            const loadingText = document.getElementById('loadingText');
-            loadingText.textContent = loadingMessages[0];
-            const msgInterval = setInterval(() => {
-                msgIndex = (msgIndex + 1) % loadingMessages.length;
-                loadingText.textContent = loadingMessages[msgIndex];
-            }, 600);
-
-            setTimeout(() => {
-                clearInterval(msgInterval);
-                loadingText.textContent = 'Document ready.';
-
-                STATE.currentDocument = buildDocument(nameOccupation, issueTopic, desiredOutcome, STATE
-                    .selectedTone);
-                STATE.freeDocsRemaining = Math.max(0, STATE.freeDocsRemaining - 1);
-                STATE.documentVault.unshift({
-                    id: Date.now(),
-                    title: STATE.currentDocument.title,
-                    tone: STATE.selectedTone,
-                    date: new Date().toISOString(),
-                    nameOccupation,
-                    issueTopic,
-                    desiredOutcome,
-                    docType: STATE.currentDocument.docType,
-                    genes: STATE.currentDocument.genes.map(g => g.key),
-                    preview: STATE.currentDocument.fullDocument.substring(0, 200) + '...',
-                    fullDocument: STATE.currentDocument.fullDocument,
-                });
-                if (STATE.documentVault.length > 50) STATE.documentVault = STATE.documentVault.slice(0, 50);
-                saveState();
-                renderDocument(STATE.currentDocument);
-                updateVaultBadge();
-                updateFreeCount();
-
-                loadingOverlay.classList.remove('visible');
-                outputContainer.classList.add('visible');
-                generateBtn.disabled = false;
-
-                // Show suggested next documents
-                renderSuggestedNext(STATE.currentDocument.tone);
-                suggestedNext.classList.add('visible');
-
-                // Show email capture after first free doc
-                if (!STATE.userEmail && STATE.freeDocsRemaining === 0) {
-                    setTimeout(() => {
-                        emailCapture.classList.add('visible');
-                        emailCapture.scrollIntoView({ behavior: 'smooth' });
-                    }, 1500);
-                }
-
-                outputContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                // Reset feedback buttons
-                document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('voted'));
-                document.getElementById('feedbackThanks').classList.remove('visible');
-            }, 1800 + Math.random() * 1500);
-        }
-
-        function renderDocument(data) {
-            document.getElementById('docTypeLabel').textContent = data.docType;
-            const toneBadge = document.getElementById('toneBadge');
-            toneBadge.textContent = data.tone.name === 'Hellraiser' ? '🔥 Hellraiser' :
-                data.tone.name === 'Praiser' ? '❄️ Praiser' : '🎯 ' + data.tone.name;
-            toneBadge.className = 'tone-badge ' + data.tone.cssClass;
-
-            const geneIndicators = document.getElementById('geneIndicators');
-            geneIndicators.innerHTML = data.genes.map(g =>
-                `<span class="gene-tag ${g.cssClass}">${g.name}</span>`
-            ).join('');
-
-            const outputBody = document.getElementById('outputBody');
-            let html = `<h1>${data.title}</h1>\n`;
-            html +=
-                `<p style="color:#888;margin-bottom:1.5rem;">Prepared with precision • ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>\n`;
-            html += data.fullDocument;
-            outputBody.innerHTML = html;
-        }
-
-        function renderSuggestedNext(toneProfile) {
-            const suggestionList = document.getElementById('suggestionList');
-            suggestionList.innerHTML = toneProfile.suggestedNext.map((sug, i) =>
-                `<div class="suggestion-item" onclick="quickGenerate('${escapeHtml(sug)}')">
-                    <span class="sug-text">${sug}</span>
-                    <span class="sug-arrow">→</span>
-                </div>`
-            ).join('');
-        }
-
-        function quickGenerate(topic) {
-            document.getElementById('issueTopic').value = topic;
-            document.getElementById('desiredOutcome').value = 'Successful resolution and clear path forward';
-            switchView('generator');
-            setTimeout(() => {
-                document.getElementById('inputCard').scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        }
-
-        function regenerateDocument() {
-            const outputContainer = document.getElementById('outputContainer');
-            const suggestedNext = document.getElementById('suggestedNext');
-            const emailCapture = document.getElementById('emailCapture');
-            outputContainer.classList.remove('visible');
-            suggestedNext.classList.remove('visible');
-            emailCapture.classList.remove('visible');
-            STATE.feedbackSubmitted = false;
-            document.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('voted'));
-            document.getElementById('feedbackThanks').classList.remove('visible');
-            generateDocument();
-        }
-
-        // ============================================
-        // LEARNING ENGINE — FEEDBACK SYSTEM
-        // ============================================
-        function submitFeedback(type) {
-            if (STATE.feedbackSubmitted) return;
-            STATE.feedbackSubmitted = true;
-
-            const thumbsUp = document.querySelector('.feedback-btn.thumbs-up');
-            const thumbsDown = document.querySelector('.feedback-btn.thumbs-down');
-            const thanks = document.getElementById('feedbackThanks');
-
-            if (type === 'up') {
-                thumbsUp.classList.add('voted');
-                thumbsDown.classList.remove('voted');
-            } else {
-                thumbsDown.classList.add('voted');
-                thumbsUp.classList.remove('voted');
-            }
-            thanks.classList.add('visible');
-
-            // Record learning data
-            const doc = STATE.currentDocument;
-            if (doc) {
-                STATE.learningData.feedback.push({
-                    timestamp: Date.now(),
-                    tone: STATE.selectedTone,
-                    genes: doc.genes.map(g => g.key),
-                    rating: type,
-                    issueKeywords: document.getElementById('issueTopic').value.toLowerCase().split(' '),
-                });
-
-                // Keep last 200 feedback entries
-                if (STATE.learningData.feedback.length > 200) {
-                    STATE.learningData.feedback = STATE.learningData.feedback.slice(-200);
-                }
-
-                // Update tone preferences
-                if (!STATE.learningData.tonePreferences[STATE.selectedTone]) {
-                    STATE.learningData.tonePreferences[STATE.selectedTone] = { up: 0, down: 0 };
-                }
-                STATE.learningData.tonePreferences[STATE.selectedTone][type]++;
-
-                // Update gene success rates
-                doc.genes.forEach(g => {
-                    if (!STATE.learningData.geneSuccessRates[g.key]) {
-                        STATE.learningData.geneSuccessRates[g.key] = 1.0;
-                    }
-                    if (type === 'up') {
-                        STATE.learningData.geneSuccessRates[g.key] = Math.min(2.0, STATE.learningData
-                            .geneSuccessRates[g.key] + 0.05);
-                    } else {
-                        STATE.learningData.geneSuccessRates[g.key] = Math.max(0.5, STATE.learningData
-                            .geneSuccessRates[g.key] - 0.03);
-                    }
-                });
-
-                saveState();
-                console.log('🧠 Vellum Learning Engine updated. Total feedback entries:',
-                    STATE.learningData.feedback.length);
-            }
-
-            setTimeout(() => {
-                thanks.classList.remove('visible');
-            }, 3000);
-        }
-
-        // ============================================
-        // EMAIL CAPTURE
-        // ============================================
-        function captureEmail() {
-            const emailInput = document.getElementById('emailInput');
-            const email = emailInput.value.trim();
-            if (!email || !email.includes('@')) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-            STATE.userEmail = email;
-            saveState();
-            document.getElementById('emailForm').style.display = 'none';
-            document.getElementById('emailConfirmation').classList.add('visible');
-            console.log('📧 Email captured:', email);
-            setTimeout(() => {
-                document.getElementById('emailCapture').classList.remove('visible');
-                document.getElementById('emailForm').style.display = 'block';
-                document.getElementById('emailConfirmation').classList.remove('visible');
-            }, 3000);
-        }
-
-        function skipEmail() {
-            document.getElementById('emailCapture').classList.remove('visible');
-        }
-
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
-        function copyDocument() {
-            if (!STATE.currentDocument) return;
-            const text = document.getElementById('outputBody').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector('.action-btn.primary');
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Copied!';
-                btn.style.background = '#4caf91';
-                btn.style.borderColor = '#4caf91';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = 'var(--accent)';
-                    btn.style.borderColor = 'var(--accent)';
-                }, 2000);
-            });
-        }
-
-        function downloadDocument() {
-            if (!STATE.currentDocument) return;
-            const text = document.getElementById('outputBody').innerText;
-            const blob = new Blob([text], { type: 'text/markdown' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${STATE.currentDocument.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function capitalizeFirst(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-        }
-
-        function truncateText(text, maxLen) {
-            if (text.length <= maxLen) return text;
-            return text.substring(0, maxLen).trimEnd() + '...';
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function updateVaultBadge() {
-            document.getElementById('vaultCount').textContent = STATE.documentVault.length;
-        }
-
-        function updateFreeCount() {
-            document.getElementById('freeCount').textContent = STATE.freeDocsRemaining;
-            if (STATE.freeDocsRemaining === 0) {
-                document.querySelector('.free-banner').innerHTML =
-                    '🔒 Free document used. <strong>Enter your email below</strong> to save it and unlock more — or <strong>Go Unlimited</strong> for unrestricted access.';
-            }
-        }
-
-        // ============================================
-        // VIEW SWITCHING
-        // ============================================
-        function switchView(viewName) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(`view-${viewName}`).classList.add('active');
-            if (viewName === 'vault') renderVault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function renderVault() {
-            const vaultList = document.getElementById('vaultList');
-            if (STATE.documentVault.length === 0) {
-                vaultList.innerHTML = `
-                    <div class="vault-empty">
-                        <div class="empty-icon">📭</div>
-                        <p>No documents yet. Go generate your first masterpiece.</p>
-                        <button class="action-btn primary" style="margin-top:1rem;" onclick="switchView('generator')">Create Document →</button>
-                    </div>`;
-                return;
-            }
-            vaultList.innerHTML = STATE.documentVault.map((doc, i) => {
-                const toneProfile = TONE_PROFILES[doc.tone] || TONE_PROFILES['direct'];
-                const date = new Date(doc.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric',
-                    year: 'numeric' });
-                return `
-                    <div class="vault-item" onclick="loadFromVault(${i})">
-                        <div>
-                            <div class="vault-title">${escapeHtml(doc.title)}</div>
-                            <div class="vault-date">${date} · ${doc.nameOccupation.split(',')[0]}</div>
-                        </div>
-                        <span class="vault-tone tone-badge ${toneProfile.cssClass}">${toneProfile.name}</span>
-                    </div>`;
-            }).join('');
-        }
-
-        function loadFromVault(index) {
-            const doc = STATE.documentVault[index];
-            STATE.currentDocument = {
-                title: doc.title,
-                docType: doc.docType,
-                genes: doc.genes.map(key => GENE_LIBRARY[key] || { name: key, cssClass: 'gene-rosetta' }),
-                fullDocument: doc.fullDocument,
-                tone: TONE_PROFILES[doc.tone] || TONE_PROFILES['direct'],
-            };
-            document.getElementById('nameOccupation').value = doc.nameOccupation;
-            document.getElementById('issueTopic').value = doc.issueTopic;
-            document.getElementById('desiredOutcome').value = doc.desiredOutcome;
-            STATE.selectedTone = doc.tone;
-            updateToneButtons();
-            switchView('generator');
-            setTimeout(() => {
-                const outputContainer = document.getElementById('outputContainer');
-                const suggestedNext = document.getElementById('suggestedNext');
-                outputContainer.classList.add('visible');
-                renderDocument(STATE.currentDocument);
-                renderSuggestedNext(STATE.currentDocument.tone);
-                suggestedNext.classList.add('visible');
-                outputContainer.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        }
-
-        // ============================================
-        // TONE SELECTOR
-        // ============================================
-        function updateToneButtons() {
-            document.querySelectorAll('.tone-btn').forEach(btn => {
-                btn.className = 'tone-btn';
-                if (btn.dataset.tone === STATE.selectedTone) {
-                    const classMap = {
-                        hellraiser: 'active-fire',
-                        firm: 'active-firm',
-                        direct: 'active-direct',
-                        polite: 'active-polite',
-                        praiser: 'active-praiser',
-                    };
-                    btn.classList.add(classMap[STATE.selectedTone] || 'active-direct');
-                }
-            });
-        }
-
-        document.getElementById('toneSelector').addEventListener('click', (e) => {
-            if (e.target.classList.contains('tone-btn')) {
-                STATE.selectedTone = e.target.dataset.tone;
-                updateToneButtons();
-            }
-        });
-
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        function init() {
-            updateVaultBadge();
-            updateFreeCount();
-            updateToneButtons();
-            if (STATE.userEmail) {
-                document.getElementById('emailInput').value = STATE.userEmail;
-            }
-            console.log('%c Vellum %c F*** Your Cookie Cutter Template.™ ',
-                'background:#e85d3a;color:#fff;padding:10px 14px;font-weight:800;font-size:1.1em;border-radius:4px 0 0 4px;',
-                'background:#0f0f15;color:#c9a96e;padding:10px 14px;font-weight:700;border-radius:0 4px 4px 0;');
-            console.log('%c🧠 Learning Engine Active %c| %c📦 Vault Ready %c| %c🔥 Free Docs: ' + STATE.freeDocsRemaining,
-                'color:#e85d3a;font-weight:700;', '', 'color:#c9a96e;font-weight:700;', '', 'color:#7eb8da;font-weight:700;'
-                );
-            console.log('%cTotal documents generated: ' + STATE.documentVault.length + ' %c| %cFeedback entries: ' + STATE
-                .learningData.feedback.length,
-                'color:#fff;', '', 'color:#4caf91;');
-        }
-
-        init();
-    </script>
-</body>
-                                                                                                       </html>
+        function updateUIForAuth() {
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const emailDisplay = document.getElementById('user
